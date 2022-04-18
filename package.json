@@ -1,0 +1,58 @@
+{
+  "name": "@yeskiy/prpcow",
+  "version": "1.0.0",
+  "description": "Plain RPC (Remote Procedure Call) over Web socket",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no examples specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EgorCloud/prpcow.git"
+  },
+  "dependencies": {
+    "events": "^3.3.0",
+    "isomorphic-ws": "^4.0.1",
+    "md5": "^2.3.0",
+    "ws": "^8.5.0"
+  },
+  "peerDependencies": {
+    "ws": "^8.5.0 || ^7.5.0"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.18.0",
+    "@typescript-eslint/parser": "^5.18.0",
+    "eslint": "^8.13.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-loader": "^4.0.2",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jest": "^26.1.4",
+    "eslint-plugin-prettier": "^4.0.0",
+    "jest": "^27.5.1",
+    "prettier": "^2.6.2",
+    "typescript": "^4.6.3"
+  },
+  "engines": {
+    "node": ">=14.x"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "keywords": [
+    "RPC",
+    "plain",
+    "Websocket",
+    "Remote",
+    "Call",
+    "js"
+  ],
+  "author": "Yehor Brodskiy",
+  "license": "CC-BY-SA-4.0",
+  "bugs": {
+    "url": "https://github.com/EgorCloud/prpcow/issues"
+  },
+  "homepage": "https://github.com/EgorCloud/prpcow#readme"
+}
