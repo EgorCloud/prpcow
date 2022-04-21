@@ -1,5 +1,5 @@
 {
-  "name": "@yeskiy/prpcow",
+  "name": "prpcow",
   "version": "1.0.0",
   "description": "Plain RPC (Remote Procedure Call) over Web socket",
   "main": "src/index.js",
@@ -12,9 +12,7 @@
   },
   "dependencies": {
     "events": "^3.3.0",
-    "isomorphic-ws": "^4.0.1",
-    "md5": "^2.3.0",
-    "ws": "^8.5.0"
+    "isomorphic-ws": "^4.0.1"
   },
   "peerDependencies": {
     "ws": "^8.5.0 || ^7.5.0"

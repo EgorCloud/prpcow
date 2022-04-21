@@ -1,5 +1,5 @@
 const EventEmitter = require("events");
-const md5 = require("md5");
+const crypto = require("crypto");
 const versionChecker = require("./utils/versionChecker.util");
 const badRequestUtil = require("./utils/badRequest.util");
 const RuntimeError = require("./utils/error.utils");
@@ -23,13 +23,15 @@ module.exports = class RPCServer {
   }
 
   onConnection(websocket) {
+    // eslint-disable-next-line no-param-reassign
     websocket.__send = websocket.send;
+    // eslint-disable-next-line no-param-reassign
     websocket.send = async (message) =>
       websocket.__send(await resultAdapter(message));
     const send = (type, data) => websocket.send(JSON.stringify({ type, data }));
     this.logger.silly("Updated websocket.send");
 
-    const key = md5(new Date().valueOf());
+    const key = crypto.randomBytes(20).toString("hex");
 
     this.logger.silly(`Generated key: ${key}`);
 

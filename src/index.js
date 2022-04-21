@@ -1,4 +1,4 @@
-const Websocket = require("ws");
+const Websocket = require("isomorphic-ws");
 const RPCServer = require("./server");
 const RPCClient = require("./client");
 const WeakFunctionPool = require("./functionResolvers/weakFunctionPool.functionResolver");
@@ -14,6 +14,7 @@ module.exports = class PRPC {
     this.version = process.env.NODE_CURRENT_VERSION || "1.0.0";
   }
 
+  // noinspection JSValidateJSDoc
   /**
    * Create a `PRPC` server instance.
    *
