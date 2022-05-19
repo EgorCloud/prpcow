@@ -1,7 +1,8 @@
+/* eslint-disable */
 module.exports = class ModelResolver {
-  constructor() {}
+    constructor() {}
 
-  serialize(model, getFunction) {}
+    serialize(model, getFunction) {}
 
-  deserialize(model, getFunction) {}
+    deserialize(model, getFunction) {}
 };

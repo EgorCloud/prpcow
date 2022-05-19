@@ -1,50 +1,50 @@
 module.exports = class TextWeakMap extends WeakMap {
-  constructor(iterable) {
-    super(iterable);
-    this.textAdapter = new Map();
-  }
-
-  set(key, value) {
-    let realKey = key;
-    if (typeof key === "string") {
-      // eslint-disable-next-line no-new-wrappers
-      realKey = new String(value);
-      this.textAdapter.set(key, realKey);
+    constructor(iterable) {
+        super(iterable);
+        this.textAdapter = new Map();
     }
-    return super.set(realKey, value);
-  }
 
-  delete(key) {
-    let realKey = key;
-    if (typeof key === "string") {
-      realKey = this.textAdapter.get(key);
-      this.textAdapter.delete(key);
+    set(key, value) {
+        let realKey = key;
+        if (typeof key === "string") {
+            // eslint-disable-next-line no-new-wrappers
+            realKey = new String(value);
+            this.textAdapter.set(key, realKey);
+        }
+        return super.set(realKey, value);
     }
-    return super.delete(realKey);
-  }
 
-  get(key) {
-    let realKey = key;
-    if (typeof key === "string") {
-      realKey = this.textAdapter.get(key);
+    delete(key) {
+        let realKey = key;
+        if (typeof key === "string") {
+            realKey = this.textAdapter.get(key);
+            this.textAdapter.delete(key);
+        }
+        return super.delete(realKey);
     }
-    return super.get(realKey);
-  }
 
-  has(key) {
-    let realKey = key;
-    if (typeof key === "string") {
-      realKey = this.textAdapter.get(key);
-      if (!realKey) return false;
+    get(key) {
+        let realKey = key;
+        if (typeof key === "string") {
+            realKey = this.textAdapter.get(key);
+        }
+        return super.get(realKey);
     }
-    return super.has(realKey);
-  }
 
-  getTextAdapter() {
-    return this.textAdapter;
-  }
+    has(key) {
+        let realKey = key;
+        if (typeof key === "string") {
+            realKey = this.textAdapter.get(key);
+            if (!realKey) return false;
+        }
+        return super.has(realKey);
+    }
 
-  getTextAdapterKeys() {
-    return Array.from(this.textAdapter.keys());
-  }
+    getTextAdapter() {
+        return this.textAdapter;
+    }
+
+    getTextAdapterKeys() {
+        return Array.from(this.textAdapter.keys());
+    }
 };
