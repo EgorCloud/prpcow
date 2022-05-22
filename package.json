@@ -1,10 +1,11 @@
 {
   "name": "prpcow",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Plain RPC (Remote Procedure Call) over Web socket",
   "main": "src/index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "release": "npx standard-version"
   },
   "repository": {
     "type": "git",
