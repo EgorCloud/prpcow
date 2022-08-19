@@ -14,7 +14,7 @@ module.exports = class UniversalRPC {
         this.logger = logger(
             this.options?.logger?.enabled || false,
             this.options?.logger?.instance || null,
-            "URPC"
+            `URPC ${session.sessionId.slice(-4)}`
         );
         this.eventEmitter = new EventEmitter();
         this._theirsModel = new Proxy(
@@ -96,11 +96,13 @@ module.exports = class UniversalRPC {
                 } else if (clientRequest.type === "requestCloseConfirm") {
                     this.logger.silly(`"requestCloseConfirm" type received`);
                     if (this._isCloseRequestCreated) {
-                        this.logger.silly(`closing session`);
-                        this._requestClose.forEach((close) => {
-                            close();
-                        });
-                        this.session.close();
+                        await Promise.allSettled(
+                            this._requestClose.map((close) => close())
+                        );
+                        this.logger.silly(`Close requests resolved`);
+
+                        await this.session.close();
+                        this.logger.silly(`Session closed`);
                     } else {
                         throw new Error("Close request not created");
                     }
@@ -197,15 +199,19 @@ module.exports = class UniversalRPC {
         this.logger.debug("Close Event emitted");
     }
 
-    requestClose() {
+    async requestClose() {
+        this.logger.debug("Requesting close");
         const requestClosePromise = new Promise((resolve) => {
             this._requestClose.push(() => resolve());
         });
+        this.logger.silly("Request close promise added");
+
         if (!this._isCloseRequestCreated) {
             this._isCloseRequestCreated = true;
             this.session.send({
                 type: "requestClose",
             });
+            this.logger.silly("Request close sent");
         }
         return requestClosePromise;
     }

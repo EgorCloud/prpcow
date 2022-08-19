@@ -8,8 +8,8 @@ const UniversalRPC = require("./universalRPC");
 const logger = require("./utils/loggerAppender.util");
 
 module.exports = class RPCServer {
-    constructor(websocketServer, options) {
-        this.websocketInstance = websocketServer;
+    constructor(websocketInstance, options) {
+        this.websocketInstance = websocketInstance;
         this.options = options;
         this.logger = logger(
             this.options?.logger?.enabled || false,
@@ -18,50 +18,43 @@ module.exports = class RPCServer {
         this.activeSessions = {};
         this.eventEmitter = new EventEmitter();
         this.websocketInstance.on("connection", (ws, request) => {
-            this.logger.info(`New connection`);
+            // eslint-disable-next-line no-param-reassign
+            ws.__send = ws.send;
+            // eslint-disable-next-line no-param-reassign
+            ws.send = async (message) =>
+                ws.__send(await resultAdapter(message));
+            const key = crypto.randomBytes(20).toString("hex");
+            // eslint-disable-next-line no-param-reassign
+            ws.sessionId = key;
+            this.logger.silly(`Generated session key: ${key}`);
+            this.logger.silly("Updated websocket.send");
+
+            this.logger.info(`New connection (${key}})`);
             this.onConnection(ws, request);
         });
     }
 
     onConnection(websocket) {
-        // eslint-disable-next-line no-param-reassign
-        websocket.__send = websocket.send;
-        // eslint-disable-next-line no-param-reassign
-        websocket.send = async (message) =>
-            websocket.__send(await resultAdapter(message));
+        const key = websocket.sessionId;
+        const keyPart = key.slice(-4);
         const send = (type, data) =>
             websocket.send(JSON.stringify({ type, data }));
-        this.logger.silly("Updated websocket.send");
-
-        const key = crypto.randomBytes(20).toString("hex");
-
-        this.logger.silly(`Generated key: ${key}`);
-
-        send("init", {
-            key,
-            version: this.options.version,
-            functionResolver: this.options.FunctionResolver.name,
-        });
-
-        this.logger.debug("Sent init status with message:", {
-            key,
-            version: this.options.version,
-            functionResolver: this.options.FunctionResolver.name,
-        });
 
         const initMessageOperator = (messageText) => {
-            this.logger.debug("Received new message by init operator");
+            this.logger.verbose(
+                `[${keyPart}] Received new message by init operator`
+            );
 
             try {
                 const clientRequest = JSON.parse(messageText.data);
-
                 this.logger.debug(
-                    "Received message with Client request message:",
+                    `[${keyPart}] Received message with Client request message:`,
                     clientRequest
                 );
 
                 if (clientRequest.type === "init") {
-                    this.logger.silly("type is init");
+                    this.logger.silly(`[${keyPart}] type is init`);
+
                     if (
                         versionChecker(
                             this.options.version,
@@ -69,43 +62,53 @@ module.exports = class RPCServer {
                             this.options.versionAcceptType
                         )
                     ) {
-                        this.logger.silly("version is ok");
+                        this.logger.silly(`[${keyPart}] version is ok`);
 
-                        websocket.send(
-                            JSON.stringify({ type: "ready", data: { key } })
+                        const universalRPC = new UniversalRPC(websocket, {
+                            logger: {
+                                ...this.options.logger,
+                                instance: this.logger,
+                            },
+                            ...this.options.universalRPC,
+                        });
+                        this.logger.silly(
+                            `[${keyPart}] UniversalRPC instance created`
                         );
-                        this.logger.silly("Sent ready message");
-
-                        this.logger.silly(`UniversalRPC instance created`);
-                        // eslint-disable-next-line no-param-reassign
-                        websocket.sessionId = key;
-                        this.emitOnNewSession(
-                            new UniversalRPC(websocket, this.options)
-                        );
-                        this.logger.silly("Emitted onNewSession");
 
                         websocket.removeEventListener(
                             "message",
                             initMessageOperator
                         );
                         this.logger.silly("Removed init message listener");
-                        this.logger.debug("Ready to receive messages");
-                    } else {
-                        this.logger.silly("version is not ok");
-                        websocket.send(
-                            badRequestUtil(
-                                new RuntimeError(
-                                    "Version mismatch",
-                                    400,
-                                    "Bad Request"
-                                )
-                            )
-                        );
-                        websocket.close();
+
+                        send("ready", { key });
+                        this.logger.silly(`[${keyPart}] Sent ready message`);
+
+                        this.emitOnNewSession(universalRPC);
+                        this.logger.silly(`[${keyPart}] Emitted onNewSession`);
+
                         this.logger.debug(
-                            "Sent bad request due to version mismatch and closed connection"
+                            `[${keyPart}] Ready to receive messages`
+                        );
+                    } else {
+                        this.logger.silly(`[${keyPart}] version is not ok`);
+                        this.logger.debug(
+                            `[${keyPart}] Sent bad request due to version mismatch and closed connection`
+                        );
+
+                        throw new RuntimeError(
+                            "Version mismatch",
+                            400,
+                            "Bad Request"
                         );
                     }
+                } else {
+                    this.logger.silly(`Unknown message received`);
+                    throw new RuntimeError(
+                        "Could not understand request",
+                        400,
+                        "Bad request"
+                    );
                 }
             } catch (e) {
                 this.logger.error(e);
@@ -115,7 +118,19 @@ module.exports = class RPCServer {
         };
 
         websocket.addEventListener("message", initMessageOperator);
-        this.logger.silly("Added init message listener");
+        this.logger.silly(`[${keyPart}]  Added init message listener`);
+
+        const initPayload = {
+            key,
+            version: this.options.version,
+            functionResolver: this.options.universalRPC.FunctionResolver.name,
+        };
+
+        send("init", initPayload);
+        this.logger.verbose(
+            `[${keyPart}]  Sent init status with message:`,
+            initPayload
+        );
     }
 
     /**
@@ -144,7 +159,7 @@ module.exports = class RPCServer {
      * @type {UniversalRPC}
      */
     emitOnNewSession(universalRPC) {
-        universalRPC.session.addListener("close", () => {
+        universalRPC.on("close", () => {
             this.logger.debug(
                 "UniversalRPC session closed, removing session from active sessions"
             );
@@ -155,12 +170,13 @@ module.exports = class RPCServer {
     }
 
     async close() {
-        this.websocketInstance.close();
         await Promise.all(
-            Object.values(this.activeSessions).map((universalRPC) =>
+            Object.values(this.activeSessions).map(async (universalRPC) =>
                 universalRPC.requestClose()
             )
         );
+
+        this.websocketInstance.close();
         this.logger.debug("Closed websocket server");
     }
 };

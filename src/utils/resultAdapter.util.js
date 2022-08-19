@@ -1,4 +1,3 @@
-// eslint-disable-next-line consistent-return
 module.exports = async function resultAdapter(result) {
     if (result instanceof Error) throw result;
     if (typeof result === "object")
@@ -8,5 +7,5 @@ module.exports = async function resultAdapter(result) {
             return result;
         }
     if (typeof result === "function") return resultAdapter(await result());
-    if (typeof result === "string" || typeof result === "number") return result;
+    return result;
 };

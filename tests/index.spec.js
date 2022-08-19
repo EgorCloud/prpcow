@@ -181,4 +181,74 @@ describe("Base tests", () => {
 
         expect(result).toEqual("Hello World");
     });
+
+    it("should close connection by .close on server", async () => {
+        const server = new PRPC().server({
+            ws: {
+                port: 9094,
+            },
+            logger: {
+                enabled: "silly",
+                instance: logger("server"),
+            },
+        });
+        server.on("newSession", (session) => {
+            console.log("server session connected");
+            session.setOursModel({
+                name: "server",
+                some: {
+                    ping: async () => "pong",
+                    makeServerClose: async () => {
+                        setTimeout(() => {
+                            server.close();
+                        }, 0);
+                        return "closed";
+                    },
+                },
+            });
+        });
+
+        const client = await new Promise((resolve, reject) => {
+            new PRPC().client(
+                "ws://localhost:9094",
+                [],
+                {
+                    logger: {
+                        enabled: "silly",
+                        instance: logger("client"),
+                    },
+                },
+                (err, session) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        session.on("theirsModelChange", async () => {
+                            resolve(session);
+                        });
+                    }
+                }
+            );
+        });
+        let isClientGotClosed = false;
+        client.onRequestClose(async () => {
+            isClientGotClosed = true;
+        });
+
+        const closePromise = new Promise((resolve) => {
+            client.on("close", () => {
+                console.log("HERE");
+                resolve();
+            });
+        });
+
+        expect(client).toBeDefined();
+        expect(await client.theirsModel.some.ping()).toEqual("pong");
+        const makeCloseResponse =
+            await client.theirsModel.some.makeServerClose();
+
+        expect(makeCloseResponse).toEqual("closed");
+        await closePromise;
+
+        expect(isClientGotClosed).toBeTruthy();
+    });
 });

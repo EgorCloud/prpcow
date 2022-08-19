@@ -12,7 +12,22 @@ module.exports = class DefaultModelResolver extends ModelResolver {
                 }
                 return Type(value).valueOf();
             };
-        this.genericCreatures = {
+
+        this.primitiveValues = [
+            "Boolean",
+            "Number",
+            "String",
+            "BigInt",
+            "Symbol",
+            "Buffer",
+        ];
+        this.unsupportedTypes = ["Promise"];
+        this.ignoredTypesFromExtendedCopy = ["Function", "Object"];
+        this.ignoredTypes = {
+            null: null,
+            undefined,
+        };
+        this.genericTypes = {
             Boolean: this.primitiveBuilder(Boolean),
             Number: this.primitiveBuilder(Number),
             String: this.primitiveBuilder(String),
@@ -74,26 +89,12 @@ module.exports = class DefaultModelResolver extends ModelResolver {
                 serialize: (model, getFunction) => ({ id: getFunction(model) }),
             },
         };
-        this.unsupportedTypes = ["Promise"];
-        this.primitiveValues = [
-            "Boolean",
-            "Number",
-            "String",
-            "BigInt",
-            "Symbol",
-            "Buffer",
-        ];
-        this.baseIgnoredTypesFromExtendedCopy = ["Function", "Object"];
-        this.valuesToIgnoreProcess = {
-            null: null,
-            undefined,
-        };
     }
 
     serialize(affectedModel, getFunction) {
         const model = affectedModel;
         const returnValue = {};
-        if (Object.values(this.valuesToIgnoreProcess).indexOf(model) === -1) {
+        if (Object.values(this.ignoredTypes).indexOf(model) === -1) {
             returnValue.type = model.constructor?.name || "Object";
 
             if (this.unsupportedTypes.indexOf(returnValue.type) !== -1) {
@@ -127,8 +128,8 @@ module.exports = class DefaultModelResolver extends ModelResolver {
                 );
                 if (
                     [
-                        ...Object.keys(this.genericCreatures),
-                        ...this.baseIgnoredTypesFromExtendedCopy,
+                        ...Object.keys(this.genericTypes),
+                        ...this.ignoredTypesFromExtendedCopy,
                     ].indexOf(returnValue.type) === -1
                 ) {
                     Object.getOwnPropertyNames(
@@ -153,9 +154,7 @@ module.exports = class DefaultModelResolver extends ModelResolver {
     }
 
     deserialize(model, getFunction) {
-        if (
-            Object.keys(this.valuesToIgnoreProcess).indexOf(model.type) !== -1
-        ) {
+        if (Object.keys(this.ignoredTypes).indexOf(model.type) !== -1) {
             return model.value;
         }
 
@@ -167,17 +166,15 @@ module.exports = class DefaultModelResolver extends ModelResolver {
         }
 
         if (this.primitiveValues.indexOf(model.type) !== -1) {
-            return this.genericCreatures[model.type](model.value);
+            return this.genericTypes[model.type](model.value);
         }
 
         let genericCreature;
 
         if (model.type === "Object") {
             genericCreature = {};
-        } else if (
-            Object.keys(this.genericCreatures).indexOf(model.type) !== -1
-        ) {
-            genericCreature = new this.genericCreatures[model.type]();
+        } else if (Object.keys(this.genericTypes).indexOf(model.type) !== -1) {
+            genericCreature = new this.genericTypes[model.type]();
         } else {
             const className = model.type
                 .replace(/(^[0-9])/g, "_")
