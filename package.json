@@ -1,6 +1,6 @@
 {
   "name": "prpcow",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Plain RPC (Remote Procedure Call) over Web socket",
   "main": "src/index.js",
   "scripts": {
@@ -48,7 +48,7 @@
     "js"
   ],
   "author": "Yehor Brodskiy",
-  "license": "CC-BY-SA-4.0",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/EgorCloud/prpcow/issues"
   },
