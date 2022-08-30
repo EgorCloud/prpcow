@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/EgorCloud/prpcow.git"
+    "url": "git+https://github.com/yeskiy/prpcow.git"
   },
   "dependencies": {
     "events": "^3.3.0",
@@ -50,7 +50,7 @@
   "author": "Yehor Brodskiy",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/EgorCloud/prpcow/issues"
+    "url": "https://github.com/yeskiy/prpcow/issues"
   },
-  "homepage": "https://github.com/EgorCloud/prpcow#readme"
+  "homepage": "https://github.com/yeskiy/prpcow#readme"
 }
