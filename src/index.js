@@ -97,3 +97,7 @@ module.exports = class PRPC {
         );
     }
 };
+
+// TODO: expose an error when connection is down (related to functionPool)
+// TODO: Change event emitting Strategy
+// TODO: make weak function check and side deletion

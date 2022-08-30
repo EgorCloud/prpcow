@@ -1,3 +1,4 @@
+// noinspection JSPrimitiveTypeWrapperUsage
 module.exports = class TextWeakMap extends WeakMap {
     constructor(iterable) {
         super(iterable);

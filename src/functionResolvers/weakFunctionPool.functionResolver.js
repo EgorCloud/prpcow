@@ -2,7 +2,6 @@ const crypto = require("crypto");
 const FunctionResolver = require("./index");
 const TextWeakMap = require("../utils/TextWeakMap.util");
 const loggerGenerator = require("../utils/loggerAppender.util");
-// TODO: make weak function check and side deletion
 
 module.exports = class WeakFunctionPool extends FunctionResolver {
     constructor({ sendMessage, deSerializeObject, serializeObject, logger }) {

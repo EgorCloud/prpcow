@@ -1,4 +1,3 @@
-/* eslint-disable quote-props */
 const ModelResolver = require("./index");
 
 module.exports = class DefaultModelResolver extends ModelResolver {
