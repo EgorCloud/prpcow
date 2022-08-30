@@ -1,6 +1,6 @@
 {
   "name": "prpcow",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Plain RPC (Remote Procedure Call) over Web socket",
   "main": "src/index.js",
   "scripts": {
