@@ -2,24 +2,72 @@ const EventEmitter = require("events");
 const badRequestUtil = require("./utils/badRequest.util");
 const logger = require("./utils/loggerAppender.util");
 const RuntimeError = require("./utils/error.utils");
+const typeAssert = require("./utils/typeAssert.util");
 
-module.exports = class UniversalRPC {
+module.exports = class UniversalRPC extends EventEmitter {
     constructor(session, options) {
-        this._onRequestClose = [];
-        this._requestClose = [];
-        this._isCloseRequestCreated = false;
-        this.session = session;
-        this.sessionId = session.sessionId;
+        super();
+        EventEmitter.init.bind(this);
         this.options = options;
         this.logger = logger(
-            this.options?.logger?.enabled || false,
+            this.options?.logger?.level || false,
             this.options?.logger?.instance || null,
             `URPC ${session.sessionId.slice(-4)}`
         );
-        this.eventEmitter = new EventEmitter();
-        this._theirsModel = new Proxy(
-            {},
-            {
+
+        // CloseRequest-specific params
+        this._closeRequestSides = [];
+
+        // Session Params
+        this.session = session;
+        this.sessionId = session.sessionId;
+
+        // Mount null on TheirsModel
+        this.#makeTheirsModel(null);
+
+        // create modelResolver
+        this.modelResolver = new this.options.ModelResolver({
+            session: this.session,
+            logger: {
+                level: this.options.logger?.level || null,
+                instance: this.logger,
+            },
+        });
+
+        // create functionResolver
+        this.functionResolver = new this.options.FunctionResolver({
+            session: this.session,
+            sendMessage: this.#sendFunctionResolver.bind(this),
+            deSerializeObject: this.modelResolver.deserialize.bind(
+                this.modelResolver
+            ),
+            serializeObject: this.modelResolver.serialize.bind(
+                this.modelResolver
+            ),
+            logger: {
+                level: this.options.logger?.level || null,
+                instance: this.logger,
+            },
+        });
+
+        this.session.addEventListener("message", this.#onMessage.bind(this));
+        this.logger.silly("Session event listener added");
+        this.session.addEventListener("close", this.#close.bind(this));
+        this.logger.info("UniversalRPC initialized");
+    }
+
+    send(data) {
+        if (this.session.readyState !== this.session.OPEN)
+            throw new Error("Session is not in opened state");
+        return this.session.send(data);
+    }
+
+    #makeTheirsModel(newModel) {
+        if (
+            (typeof newModel === "object" || typeof newModel === "function") &&
+            newModel !== null
+        ) {
+            this._theirsModel = new Proxy(newModel, {
                 get: (target, prop) => {
                     const value = Reflect.get(target, prop);
                     if (value) {
@@ -30,194 +78,195 @@ module.exports = class UniversalRPC {
                 set: () => {
                     throw new Error("Cannot change values in TheirsModel");
                 },
-            }
-        );
-        this.modelResolver = new this.options.ModelResolver();
-        this.functionResolver = new this.options.FunctionResolver({
-            sendMessage: this.sendFunctionResolver.bind(this),
-            deSerializeObject: this.modelResolver.deserialize.bind(
-                this.modelResolver
-            ),
-            serializeObject: this.modelResolver.serialize.bind(
-                this.modelResolver
-            ),
-            logger: {
-                enabled: this.options.logger?.enabled || null,
-                instance: this.logger,
-            },
-        });
-        this.session.addEventListener("message", this.onMessage.bind(this));
-        this.logger.silly("Session event listener added");
-        this.session.addEventListener("close", this._onClose.bind(this));
-        this.logger.info("UniversalRPC initialized");
-    }
-
-    async onMessage(messageText) {
-        this.logger.debug(`Message received`, messageText.data);
-        if (this.session.readyState === this.session.OPEN) {
-            try {
-                const clientRequest = JSON.parse(messageText.data);
-                if (clientRequest.type === "upgradeModel") {
-                    this.logger.silly(`Upgrade model received`);
-                    this._theirsModel = Object.seal(
-                        this.modelResolver.deserialize(
-                            clientRequest.data,
-                            this.functionResolver.setTheirs.bind(
-                                this.functionResolver
-                            )
-                        )
-                    );
-                    this.logger.silly(`Model upgraded`, this._theirsModel);
-                    this.onUpgradeModel(this._theirsModel);
-                    this.logger.silly(`Event "theirsModelChange" emitted`);
-                } else if (clientRequest.type === "functionResolver") {
-                    this.logger.silly(`"functionResolver" type received`);
-                    this.functionResolver.onmessage(clientRequest.data);
-                } else if (clientRequest.type === "error") {
-                    const generatedError = new RuntimeError(
-                        clientRequest.error.message,
-                        clientRequest.error.status,
-                        clientRequest.error.name
-                    );
-                    this.logger.error(`Error received`, generatedError);
-                    this.onError(generatedError);
-                } else if (clientRequest.type === "requestClose") {
-                    this.logger.silly(`"requestClose" type received`);
-                    if (this._onRequestClose) {
-                        await Promise.all(
-                            this._onRequestClose.map((fn) => fn())
-                        );
-                    }
-                    this.session.send(
-                        JSON.stringify({
-                            type: "requestCloseConfirm",
-                        })
-                    );
-                } else if (clientRequest.type === "requestCloseConfirm") {
-                    this.logger.silly(`"requestCloseConfirm" type received`);
-                    if (this._isCloseRequestCreated) {
-                        await Promise.allSettled(
-                            this._requestClose.map((close) => close())
-                        );
-                        this.logger.silly(`Close requests resolved`);
-
-                        await this.session.close();
-                        this.logger.silly(`Session closed`);
-                    } else {
-                        throw new Error("Close request not created");
-                    }
-                } else if (clientRequest.type === "requestModelParam") {
-                    this.logger.silly(`"requestModelParam" type received`);
-                    // this.session.send(
-                    //     JSON.stringify({
-                    //         type: "modelParam",
-                    //         data: this.modelResolver.serialize(this._theirsModel),
-                    //     })
-                    // );
-                } else {
-                    // noinspection ExceptionCaughtLocallyJS
-                    throw new Error("Unexpected Type");
-                }
-            } catch (e) {
-                this.logger.error(e);
-                this.session.send(badRequestUtil(e));
-                this.onError(e);
-                this.logger.silly(`Event "error" emitted`);
-                this.session.close();
-                this.logger.silly(`Session closed`);
-                this._onClose();
-                this.logger.silly(`Event "close" emitted`);
-            }
+            });
         } else {
-            throw new Error("Session is not open");
+            this._theirsModel = newModel;
         }
     }
 
-    async sendUpgradeModel(model) {
+    async #onMessage(messageText) {
+        this.logger.debug(`Message received`, messageText.data);
+        if (this.session.readyState !== this.session.OPEN)
+            throw new Error("Session is not in opened state");
+
+        try {
+            const requestData = JSON.parse(messageText.data);
+            typeAssert(
+                requestData,
+                {
+                    upgradeModel: () => {
+                        this.logger.silly(`Upgrade model received`);
+                        this.#makeTheirsModel(
+                            Object.seal(
+                                this.modelResolver.deserialize(
+                                    requestData.data,
+                                    this.functionResolver.setTheirs.bind(
+                                        this.functionResolver
+                                    )
+                                )
+                            )
+                        );
+                        this.#theirsModelChange();
+                    },
+                    functionResolver: () => {
+                        this.logger.silly(`"functionResolver" type received`);
+                        this.functionResolver.onMessage(requestData.data);
+                    },
+                    error: () => {
+                        const generatedError = new RuntimeError(
+                            requestData.error.message,
+                            requestData.error.status,
+                            requestData.error.name
+                        );
+                        this.logger.error(`Error received`, generatedError);
+                        this.#error(generatedError);
+                    },
+                    closeRequest: async () => {
+                        this.logger.silly(`"closeRequest" type received`);
+                        /**
+                         * close Request event
+                         *
+                         * @event UniversalRPC#closeRequest
+                         */
+                        await Promise.all(
+                            this.listeners("closeRequest").map((item) => item())
+                        );
+                        this.send(
+                            JSON.stringify({
+                                type: "closeRequestConfirm",
+                            })
+                        );
+                    },
+                    closeRequestConfirm: async () => {
+                        this.logger.silly(
+                            `"requestCloseConfirm" type received`
+                        );
+                        if (this._closeRequestSides.length) {
+                            await Promise.all(
+                                this._closeRequestSides.map((resolve) =>
+                                    resolve()
+                                )
+                            );
+                            this.logger.silly(`Close requests resolved`);
+
+                            await this.session.close();
+                            this.logger.silly(`Session closed`);
+                        } else {
+                            throw new Error("Close request not created");
+                        }
+                    },
+                },
+                () => {
+                    throw new Error("Unexpected Type");
+                }
+            );
+        } catch (e) {
+            this.logger.error(e);
+            this.send(badRequestUtil(e));
+            this.#error(e);
+            this.logger.silly(`Event "error" emitted`);
+            this.session.close();
+            this.logger.silly(`Session closed`);
+            this.#close();
+            this.logger.silly(`Event "close" emitted`);
+        }
+    }
+
+    /**
+     * @private
+     */
+    async #sendUpgradeModel(model) {
         this.logger.debug("Sending upgrade model:", model);
-        this.session.send({
+        this.send({
             type: "upgradeModel",
             data: model,
         });
     }
 
-    async sendFunctionResolver(data) {
-        this.session.send({
+    /**
+     * @private
+     */
+    async #sendFunctionResolver(data) {
+        this.send({
             type: "functionResolver",
             data,
         });
     }
 
     /**
-     * Adds the `listener` function to the end of the listeners array for the
-     * event named `eventName`. No checks are made to see if the `listener` has
-     * already been added. Multiple calls passing the same combination of `eventName`and `listener` will result in the `listener` being added, and called, multiple
-     * times.
-     *
-     *
-     * Returns a reference to the `EventEmitter`, so that calls can be chained.
-     *
-     * By default, event listeners are invoked in the order they are added. The`emitter.prependListener()` method can be used as an alternative to add the
-     * event listener to the beginning of the listeners array.
-     *
-     * @param eventName The name of the event.
-     * @param listener The callback function
+     * @private
      */
-    on(eventName, listener) {
-        this.eventEmitter.on(eventName, listener);
-    }
-
-    /**
-     * Theirs Model Upgrade
-     *
-     * @event UniversalRPC#onUpgradeModel
-     * @type {Object}
-     */
-    onUpgradeModel(newModel) {
-        this.eventEmitter.emit("theirsModelChange", newModel);
-    }
-
-    /**
-     * Error Event
-     *
-     * @event UniversalRPC#onClose
-     * @type {Object}
-     */
-    onError(e) {
-        this.eventEmitter.emit("error", e);
+    #error(e) {
+        /**
+         * Error Event
+         *
+         * @event UniversalRPC#error
+         * @type {Error}
+         */
+        this.emit("error", e);
         this.logger.debug("Error event emitted");
     }
 
     /**
-     * Close event
-     *
-     * @event UniversalRPC#onClose
-     * @type {Object}
+     * @private
      */
-    _onClose() {
-        this.eventEmitter.emit("close");
+    #close() {
+        /**
+         * Close Event
+         *
+         * @event UniversalRPC#close
+         */
+        this.emit("close");
         this.logger.debug("Close Event emitted");
     }
 
-    async requestClose() {
+    /**
+     * @private
+     */
+    #theirsModelChange() {
+        /**
+         * Theirs model change event
+         *
+         * @event UniversalRPC#theirsModelChange
+         */
+        this.logger.verbose(`Model upgraded`, this.theirsModel);
+        this.emit("theirsModelChange", this.theirsModel);
+        this.logger.silly(`Event "theirsModelChange" emitted`);
+    }
+
+    /**
+     * Close request
+     * Making a request to graceful close connection
+     * @public
+     */
+    async closeRequest() {
         this.logger.debug("Requesting close");
+        const closeLength = this._closeRequestSides.length;
         const requestClosePromise = new Promise((resolve) => {
-            this._requestClose.push(() => resolve());
+            this._closeRequestSides.push(() => resolve());
         });
         this.logger.silly("Request close promise added");
 
-        if (!this._isCloseRequestCreated) {
-            this._isCloseRequestCreated = true;
-            this.session.send({
-                type: "requestClose",
+        if (!closeLength) {
+            this.send({
+                type: "closeRequest",
             });
             this.logger.silly("Request close sent");
         }
         return requestClosePromise;
     }
 
-    onRequestClose(executor) {
-        this._onRequestClose.push(executor);
+    addEventlistener(event, listener) {
+        return this.addListener(event, listener);
+    }
+
+    /**
+     * Set ours model
+     * @param newModel {any} - new model
+     * @public
+     */
+    setOursModel(newModel) {
+        this.oursModel = newModel;
     }
 
     set oursModel(newModel) {
@@ -227,7 +276,7 @@ module.exports = class UniversalRPC {
             set: (target, prop, value) => {
                 this.logger.silly(`Upgrade ${prop} to ${value}`);
                 Reflect.set(target, prop, value);
-                this.sendUpgradeModel(
+                this.#sendUpgradeModel(
                     this.modelResolver.serialize(
                         this.oursModel,
                         this.functionResolver.setOurs.bind(
@@ -240,7 +289,7 @@ module.exports = class UniversalRPC {
         });
         this.logger.silly("Upgrade oursModel done");
 
-        this.sendUpgradeModel(
+        this.#sendUpgradeModel(
             this.modelResolver.serialize(
                 this.oursModel,
                 this.functionResolver.setOurs.bind(this.functionResolver)
@@ -251,10 +300,6 @@ module.exports = class UniversalRPC {
 
     get oursModel() {
         return this._oursModel || {};
-    }
-
-    setOursModel(newModel) {
-        this.oursModel = newModel;
     }
 
     get theirsModel() {

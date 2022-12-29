@@ -45,6 +45,10 @@ module.exports = class TextWeakMap extends WeakMap {
         return this.textAdapter;
     }
 
+    keys() {
+        return this;
+    }
+
     getTextAdapterKeys() {
         return Array.from(this.textAdapter.keys());
     }

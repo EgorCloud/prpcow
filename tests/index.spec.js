@@ -1,3 +1,4 @@
+const { expect, it, describe } = require("@jest/globals");
 const stream = require("stream");
 const PRPC = require("../src/index");
 
@@ -29,7 +30,7 @@ describe("Base tests", () => {
                 port: 9090,
             },
             logger: {
-                enabled: "silly",
+                level: "silly",
                 instance: logger("server"),
             },
         });
@@ -41,7 +42,7 @@ describe("Base tests", () => {
                 port: 9091,
             },
             logger: {
-                enabled: "silly",
+                level: "silly",
                 instance: logger("server"),
             },
         });
@@ -52,7 +53,7 @@ describe("Base tests", () => {
                 [],
                 {
                     logger: {
-                        enabled: "silly",
+                        level: "silly",
                         instance: logger("client"),
                     },
                 },
@@ -73,7 +74,7 @@ describe("Base tests", () => {
                 port: 9092,
             },
             logger: {
-                enabled: "silly",
+                level: "silly",
                 instance: logger("server"),
             },
         });
@@ -93,7 +94,7 @@ describe("Base tests", () => {
                 [],
                 {
                     logger: {
-                        enabled: "silly",
+                        level: "silly",
                         instance: logger("client"),
                     },
                 },
@@ -122,7 +123,7 @@ describe("Base tests", () => {
                 port: 9093,
             },
             logger: {
-                enabled: "silly",
+                level: "silly",
                 instance: logger("server"),
             },
         });
@@ -134,10 +135,17 @@ describe("Base tests", () => {
                     const createdStream = new stream.PassThrough();
                     setTimeout(() => {
                         createdStream.write("Hello");
-                        createdStream.write(" ");
-                        createdStream.write("World");
-                        createdStream.end();
+                        setTimeout(() => {
+                            createdStream.write(" ");
+                            setTimeout(() => {
+                                createdStream.write("World");
+                                setTimeout(() => {
+                                    createdStream.end();
+                                }, 100);
+                            }, 100);
+                        }, 100);
                     }, 100);
+
                     return createdStream;
                 },
             });
@@ -149,7 +157,7 @@ describe("Base tests", () => {
                 [],
                 {
                     logger: {
-                        enabled: "silly",
+                        level: "silly",
                         instance: logger("client"),
                     },
                 },
@@ -188,7 +196,7 @@ describe("Base tests", () => {
                 port: 9094,
             },
             logger: {
-                enabled: "silly",
+                level: "silly",
                 instance: logger("server"),
             },
         });
@@ -214,7 +222,7 @@ describe("Base tests", () => {
                 [],
                 {
                     logger: {
-                        enabled: "silly",
+                        level: "silly",
                         instance: logger("client"),
                     },
                 },
@@ -230,13 +238,12 @@ describe("Base tests", () => {
             );
         });
         let isClientGotClosed = false;
-        client.onRequestClose(async () => {
+        client.on("closeRequest", async () => {
             isClientGotClosed = true;
         });
 
         const closePromise = new Promise((resolve) => {
             client.on("close", () => {
-                console.log("HERE");
                 resolve();
             });
         });
@@ -250,5 +257,156 @@ describe("Base tests", () => {
         await closePromise;
 
         expect(isClientGotClosed).toBeTruthy();
+    });
+    it("should send function removing after cleanup check", async () => {
+        const server = new PRPC().server({
+            ws: {
+                port: 9095,
+            },
+            logger: {
+                level: "silly",
+                instance: logger("server"),
+            },
+        });
+        let sessionId = null;
+        server.on("newSession", (session) => {
+            console.log("server session connected");
+            sessionId = session.sessionId;
+            session.setOursModel({
+                name: "server",
+                some: {
+                    ping: async () => {
+                        setTimeout(() => {
+                            session.setOursModel({
+                                otherPing: () => "otherPong",
+                            });
+                        }, 100);
+                        return "pong";
+                    },
+                    test: () => "1",
+                },
+            });
+        });
+        expect(server).toBeDefined();
+        const client = await new Promise((resolve, reject) => {
+            new PRPC().client(
+                "ws://localhost:9095",
+                [],
+                {
+                    logger: {
+                        level: "silly",
+                        instance: logger("client"),
+                    },
+                },
+                (err, session) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        session.once("theirsModelChange", async (model) => {
+                            console.log(
+                                "client session theirsModelChange",
+                                model
+                            );
+                            resolve(session);
+                        });
+                    }
+                }
+            );
+        });
+        expect(client).toBeDefined();
+        const newModelEvent = new Promise((resolve) => {
+            client.once("theirsModelChange", async (model) => {
+                console.log("client session theirsModelChange", model);
+                resolve(client);
+            });
+        });
+        const result = await client.theirsModel.some.ping();
+        expect(result).toEqual("pong");
+        await newModelEvent;
+        expect(client.theirsModel.otherPing).toBeTruthy();
+        expect(
+            Object.keys(
+                server.activeSessions[sessionId].functionResolver.oursFunctions
+            ).length
+        ).toEqual(3);
+        if (global.gc) {
+            global.gc();
+        } else {
+            throw new Error("global.gc is Required for this test.");
+        }
+        client.functionResolver.findUnusedFunctions();
+        await new Promise((resolve) => {
+            setTimeout(resolve, 100);
+        });
+        expect(
+            Object.keys(
+                server.activeSessions[sessionId].functionResolver.oursFunctions
+            ).length
+        ).toEqual(2);
+    });
+    it("should create server and client can connect and got an error when connection is lost", async () => {
+        const server = new PRPC().server({
+            ws: {
+                port: 9096,
+            },
+            logger: {
+                level: "silly",
+                instance: logger("server"),
+            },
+        });
+        server.on("newSession", (session) => {
+            console.log("server session connected");
+            session.setOursModel({
+                name: "server",
+                some: {
+                    ping: async () => {
+                        setTimeout(() => session.session.close(4000), 100);
+                        return new Promise(() => {});
+                    },
+                },
+            });
+        });
+        expect(server).toBeDefined();
+        const client = await new Promise((resolve, reject) => {
+            new PRPC().client(
+                "ws://localhost:9096",
+                [],
+                {
+                    logger: {
+                        level: "silly",
+                        instance: logger("client"),
+                    },
+                },
+                (err, session) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        session.on("theirsModelChange", async (model) => {
+                            console.log(
+                                "client session theirsModelChange",
+                                model
+                            );
+                            resolve(session);
+                        });
+                    }
+                }
+            );
+        });
+        let isGotError = false;
+        expect(client).toBeDefined();
+        try {
+            await client.theirsModel.some.ping();
+        } catch (e) {
+            isGotError = true;
+        }
+        expect(isGotError).toBeTruthy();
+
+        let isGotSecondError = false;
+        try {
+            await client.theirsModel.some.ping();
+        } catch (e) {
+            isGotSecondError = true;
+        }
+        expect(isGotSecondError).toBeTruthy();
     });
 });

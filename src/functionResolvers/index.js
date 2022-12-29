@@ -1,8 +1,8 @@
 /* eslint-disable */
 module.exports = class FunctionResolver {
     constructor() {}
-
-    onmessage() {}
+    
+    onMessage(){}
 
     setOurs() {}
 
@@ -11,4 +11,6 @@ module.exports = class FunctionResolver {
     setTheirs() {}
 
     getTheirs() {}
+    
+    close() {}
 };

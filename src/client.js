@@ -1,53 +1,63 @@
+const typeAssert = require("./utils/typeAssert.util");
 const badRequestUtil = require("./utils/badRequest.util");
 const RuntimeError = require("./utils/error.utils");
-const resultAdapter = require("./utils/resultAdapter.util");
+const websocketModifier = require("./utils/websocketModifier.util");
 const versionChecker = require("./utils/versionChecker.util");
 const UniversalRPC = require("./universalRPC");
 const logger = require("./utils/loggerAppender.util");
 
 module.exports = class RPCClient {
     constructor(websocketInstance, options) {
-        this.websocketInstance = websocketInstance;
+        this.websocket = websocketInstance;
         this.options = options;
         this.logger = logger(
-            this.options.logger?.enabled || false,
+            this.options.logger?.level || false,
             this.options.logger?.instance || false
         );
 
-        this.websocketInstance.__send = this.websocketInstance.send;
-        this.websocketInstance.send = async (message) => {
-            this.websocketInstance.__send(await resultAdapter(message));
-        };
+        // Modify websocket
+        websocketModifier(this.websocket);
         this.logger.silly("Updated websocket.send");
+        return this._init();
+    }
 
-        const send = (type, data) =>
-            this.websocketInstance.send(JSON.stringify({ type, data }));
+    _init = () =>
+        new Promise((resolve, reject) => {
+            const initMessageOperator = (messageText) => {
+                this.logger.debug("Received message from server");
+                try {
+                    const clientRequest = JSON.parse(messageText.data);
+                    typeAssert(
+                        clientRequest,
+                        {
+                            init: () => {
+                                this.logger.silly("type is init");
 
-        return (async () =>
-            new Promise((resolve, reject) => {
-                const initMessageOperator = (messageText) => {
-                    this.logger.debug("Received message from server");
-                    try {
-                        const clientRequest = JSON.parse(messageText.data);
+                                // set the session key
+                                this.key = clientRequest.data.key;
+                                this.logger.silly(
+                                    `Server key: ${this.key} received from Server`
+                                );
 
-                        if (clientRequest.type === "init") {
-                            this.logger.silly("type is init");
+                                if (
+                                    !(
+                                        versionChecker(
+                                            this.options.version,
+                                            clientRequest.data.version,
+                                            this.options.versionAcceptType
+                                        ) &&
+                                        this.options.universalRPC
+                                            .FunctionResolver.name ===
+                                            clientRequest.data.functionResolver
+                                    )
+                                ) {
+                                    throw new RuntimeError(
+                                        "Version mismatch",
+                                        400,
+                                        "Bad Request"
+                                    );
+                                }
 
-                            this.key = clientRequest.data.key;
-                            this.logger.silly(
-                                `Server key: ${this.key} received from Server`
-                            );
-
-                            if (
-                                versionChecker(
-                                    this.options.version,
-                                    clientRequest.data.version,
-                                    this.options.versionAcceptType
-                                ) &&
-                                this.options.universalRPC.FunctionResolver
-                                    .name ===
-                                    clientRequest.data.functionResolver
-                            ) {
                                 this.logger.silly(
                                     `Server version and server function resolver are ok`
                                 );
@@ -56,75 +66,85 @@ module.exports = class RPCClient {
                                     version: this.options.version,
                                     key: this.key,
                                 };
-                                send("init", initPayload);
+                                this.websocket.send({
+                                    type: "init",
+                                    data: initPayload,
+                                });
                                 this.logger.verbose(
                                     `Sent init message to server with payload`,
                                     initPayload
                                 );
-                            } else {
-                                throw new RuntimeError(
-                                    "Version mismatch",
-                                    400,
-                                    "Bad Request"
+                            },
+                            ready: () => {
+                                this.logger.silly(
+                                    `Server ready message received`
                                 );
-                            }
-                        } else if (clientRequest.type === "ready") {
-                            this.logger.silly(`Server ready message received`);
 
-                            this.websocketInstance.sessionId = this.key;
-                            const universalSession = new UniversalRPC(
-                                this.websocketInstance,
-                                {
-                                    logger: {
-                                        ...this.options.logger,
-                                        instance: this.logger,
-                                    },
-                                    ...this.options.universalRPC,
+                                this.websocket.sessionId = this.key;
+                                const universalSession = new UniversalRPC(
+                                    this.websocket,
+                                    {
+                                        logger: {
+                                            ...this.options.logger,
+                                            instance: this.logger,
+                                        },
+                                        ...this.options.universalRPC,
+                                    }
+                                );
+                                this.logger.silly(
+                                    `UniversalRPC instance created`
+                                );
+
+                                this.websocket.removeEventListener(
+                                    "message",
+                                    initMessageOperator
+                                );
+                                this.logger.silly(
+                                    `initMessageOperator removed`
+                                );
+
+                                if (!this.options.callback) {
+                                    resolve(universalSession);
+                                } else {
+                                    this.options.callback(
+                                        null,
+                                        universalSession
+                                    );
+                                    resolve();
                                 }
-                            );
-                            this.logger.silly(`UniversalRPC instance created`);
-
-                            this.websocketInstance.removeEventListener(
-                                "message",
-                                initMessageOperator
-                            );
-                            this.logger.silly(`initMessageOperator removed`);
-
-                            if (!this.options.callback) {
-                                resolve(universalSession);
-                            } else {
-                                this.options.callback(null, universalSession);
-                                resolve();
-                            }
-                            this.logger.silly("callback completed");
-
-                            this.logger.debug(`Ready to receive messages`);
-                        } else {
+                                this.logger.silly(
+                                    "callback (and Promise) resolved"
+                                );
+                                this.logger.debug(`Ready to receive messages`);
+                            },
+                        },
+                        () => {
                             this.logger.silly(`Unknown message received`);
                             throw new RuntimeError(
-                                "Could not understand request",
+                                `Could not understand request. "${
+                                    clientRequest.type
+                                        ? `Received type: ${clientRequest.type}`
+                                        : "No type received"
+                                }"`,
                                 400,
                                 "Bad request"
                             );
                         }
-                    } catch (e) {
-                        this.logger.error(e);
-                        this.websocketInstance.send(badRequestUtil(e));
-                        this.websocketInstance.close();
-                        if (!this.options.callback) {
-                            reject(e);
-                        } else {
-                            this.options.callback(e, null);
-                            resolve();
-                        }
+                    );
+                } catch (e) {
+                    this.logger.error(e);
+                    this.websocket.send(badRequestUtil(e));
+                    this.websocket.close();
+                    if (!this.options.callback) {
+                        reject(e);
+                    } else {
+                        this.options.callback(e, null);
+                        resolve();
                     }
-                };
+                }
+            };
 
-                this.websocketInstance.addEventListener(
-                    "message",
-                    initMessageOperator
-                );
-                this.logger.silly("Added initMessageOperator event listener");
-            }))();
-    }
+            this.websocket.addEventListener("message", initMessageOperator);
+            this.logger.silly("Added initMessageOperator event listener");
+        });
 };

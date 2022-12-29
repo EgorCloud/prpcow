@@ -1,56 +1,57 @@
 {
-  "name": "prpcow",
-  "version": "1.0.9",
-  "description": "Plain RPC (Remote Procedure Call) over Web socket",
-  "main": "src/index.js",
-  "scripts": {
-    "test": "jest",
-    "release": "npx standard-version"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/yeskiy/prpcow.git"
-  },
-  "dependencies": {
-    "events": "^3.3.0",
-    "isomorphic-ws": "^4.0.1"
-  },
-  "peerDependencies": {
-    "ws": "^8.5.0 || ^7.5.0"
-  },
-  "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^5.18.0",
-    "@typescript-eslint/parser": "^5.18.0",
-    "eslint": "^8.13.0",
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-config-airbnb-typescript": "^17.0.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-jest": "^26.1.4",
-    "eslint-plugin-prettier": "^4.0.0",
-    "jest": "^27.5.1",
-    "prettier": "^2.6.2",
-    "typescript": "^4.6.3"
-  },
-  "engines": {
-    "node": ">=16.x"
-  },
-  "files": [
-    "dist",
-    "src"
-  ],
-  "keywords": [
-    "RPC",
-    "plain",
-    "Websocket",
-    "Remote",
-    "Call",
-    "js"
-  ],
-  "author": "Yehor Brodskiy",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/yeskiy/prpcow/issues"
-  },
-  "homepage": "https://github.com/yeskiy/prpcow#readme"
+    "name": "prpcow",
+    "version": "1.0.9",
+    "description": "Plain RPC (Remote Procedure Call) over Web socket",
+    "main": "src/index.js",
+    "scripts": {
+        "test": "jest --expose-gc",
+        "release": "npx standard-version"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yeskiy/prpcow.git"
+    },
+    "dependencies": {
+        "events": "^3.3.0",
+        "isomorphic-ws": "^4.0.1"
+    },
+    "peerDependencies": {
+        "ws": "^8.5.0 || ^7.5.0"
+    },
+    "devDependencies": {
+        "@jest/globals": "^29.2.2",
+        "@typescript-eslint/eslint-plugin": "^5.18.0",
+        "@typescript-eslint/parser": "^5.18.0",
+        "eslint": "^8.13.0",
+        "eslint-config-airbnb-base": "^15.0.0",
+        "eslint-config-airbnb-typescript": "^17.0.0",
+        "eslint-config-prettier": "^8.5.0",
+        "eslint-plugin-import": "^2.26.0",
+        "eslint-plugin-jest": "^26.1.4",
+        "eslint-plugin-prettier": "^4.0.0",
+        "jest": "^27.5.1",
+        "prettier": "^2.6.2",
+        "typescript": "^4.6.3"
+    },
+    "engines": {
+        "node": ">=16.x"
+    },
+    "files": [
+        "dist",
+        "src"
+    ],
+    "keywords": [
+        "RPC",
+        "plain",
+        "Websocket",
+        "Remote",
+        "Call",
+        "js"
+    ],
+    "author": "Yehor Brodskiy",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/yeskiy/prpcow/issues"
+    },
+    "homepage": "https://github.com/yeskiy/prpcow#readme"
 }
