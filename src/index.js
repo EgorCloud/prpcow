@@ -11,7 +11,7 @@ module.exports = class PRPC {
      */
     constructor(WebsocketSource) {
         this.UsedWebsocket = WebsocketSource || Websocket;
-        this.version = process.env.NODE_CURRENT_VERSION || "1.0.0";
+        this.version = "1.0.0";
     }
 
     // noinspection JSValidateJSDoc
