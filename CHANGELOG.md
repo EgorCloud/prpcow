@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.12](https://github.com/yeskiy/prpcow/compare/v1.0.11...v1.0.12) (2023-01-13)
+
+
+### Bug Fixes
+
+* update functionResolver ([ba2fdad](https://github.com/yeskiy/prpcow/commit/ba2fdad2b3a10126be7dda6fcc420e59e5a5b964))
+
 ### [1.0.11](https://github.com/yeskiy/prpcow/compare/v1.0.10...v1.0.11) (2023-01-12)
 
 
