@@ -46,9 +46,8 @@ module.exports = class RPCClient {
                                             clientRequest.data.version,
                                             this.options.versionAcceptType
                                         ) &&
-                                        this.options.universalRPC
-                                            .FunctionResolver.name ===
-                                            clientRequest.data.functionResolver
+                                        clientRequest.data.functionResolver ===
+                                            "WeakFunctionPool"
                                     )
                                 ) {
                                     throw new RuntimeError(
