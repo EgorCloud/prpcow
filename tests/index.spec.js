@@ -4,7 +4,7 @@ const PRPC = require("../src/index");
 
 const logger = (prefix) => ({
     error(...args) {
-        console.error(`[${prefix}]    ERROR:`, ...args);
+        console.error(`[${prefix}]   ERROR:`, ...args);
     },
     warn(...args) {
         console.warn(`[${prefix}]    WARN: `, ...args);
@@ -16,10 +16,10 @@ const logger = (prefix) => ({
         console.log(`[${prefix}] VERBOSE:`, ...args);
     },
     debug(...args) {
-        console.log(`[${prefix}] DEBUG:`, ...args);
+        console.log(`[${prefix}]   DEBUG:`, ...args);
     },
     silly(...args) {
-        console.log(`[${prefix}] SILLY:`, ...args);
+        console.log(`[${prefix}]   SILLY:`, ...args);
     },
 });
 

@@ -171,7 +171,7 @@ module.exports = class WeakFunctionPool extends FunctionResolver {
         this.theirsFunctions.set(
             id,
             (...params) =>
-                new Promise((resolve, reject) => {
+                new Promise(async (resolve, reject) => {
                     this.logger.debug(
                         "Theirs function wrapper called",
                         id,
@@ -200,7 +200,7 @@ module.exports = class WeakFunctionPool extends FunctionResolver {
                         `${id}-${requestId}`
                     );
                     try {
-                        this.sendMessage(
+                        await this.sendMessage(
                             this.messageBuilder("execute", requestId, {
                                 id,
                                 payload: this.serializeObject(
