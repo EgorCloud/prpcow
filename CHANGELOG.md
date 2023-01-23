@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](https://github.com/yeskiy/prpcow/compare/v1.0.12...v1.1.0) (2023-01-23)
+
+
+### Features
+
+* Add ping/pong calls ([695d106](https://github.com/yeskiy/prpcow/commit/695d1061ffd570657458f7ddb625d675e804de5a))
+
 ### [1.0.12](https://github.com/yeskiy/prpcow/compare/v1.0.11...v1.0.12) (2023-01-13)
 
 
