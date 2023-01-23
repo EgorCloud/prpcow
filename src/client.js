@@ -79,17 +79,6 @@ module.exports = class RPCClient {
                                     `Server ready message received`
                                 );
 
-                                this.websocket.addEventListener("pong", () => {
-                                    this.logger.silly(`Pong received`);
-                                    setTimeout(() => {
-                                        this.websocket.ping();
-                                        this.logger.silly(`Ping sent`);
-                                    }, 500);
-                                });
-
-                                this.websocket.ping();
-                                this.logger.silly(`Initial Ping sent`);
-
                                 this.websocket.sessionId = this.key;
                                 const universalSession = new UniversalRPC(
                                     this.websocket,

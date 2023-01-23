@@ -96,17 +96,22 @@ module.exports = class RPCServer extends EventEmitter {
                             );
                             this.logger.silly("Removed init message listener");
 
-                            websocketConnection.addEventListener("ping", () => {
-                                this.logger.silly("Ping Received");
-                                websocketConnection.pong();
-                                this.logger.silly("Pong sent");
+                            websocketConnection.on("pong", () => {
+                                this.logger.silly("Pong Received");
+                                setTimeout(() => {
+                                    websocketConnection.ping();
+                                    this.logger.silly("Ping sent");
+                                }, 500);
                             });
-                            this.logger.silly("Added ping listener");
+                            this.logger.silly("Added pong listener");
 
                             websocketConnection.send({
                                 type: "ready",
                                 data: { key },
                             });
+
+                            websocketConnection.ping();
+                            this.logger.silly("Initial Ping sent");
 
                             this.logger.silly(
                                 `[${keyPart}] Sent ready message`
