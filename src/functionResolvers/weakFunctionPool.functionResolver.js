@@ -63,6 +63,10 @@ module.exports = class WeakFunctionPool extends FunctionResolver {
         this.logger.silly("WFP initialized");
     }
 
+    static name() {
+        return "WeakFunctionPool";
+    }
+
     // eslint-disable-next-line class-methods-use-this
     messageBuilder = (type, requestId, data) => ({
         type,

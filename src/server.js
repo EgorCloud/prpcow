@@ -96,6 +96,13 @@ module.exports = class RPCServer extends EventEmitter {
                             );
                             this.logger.silly("Removed init message listener");
 
+                            websocketConnection.addEventListener("ping", () => {
+                                this.logger.silly("Ping Received");
+                                websocketConnection.pong();
+                                this.logger.silly("Pong sent");
+                            });
+                            this.logger.silly("Added ping listener");
+
                             websocketConnection.send({
                                 type: "ready",
                                 data: { key },
@@ -137,7 +144,7 @@ module.exports = class RPCServer extends EventEmitter {
         const initPayload = {
             key,
             version: this.options.version,
-            functionResolver: this.options.universalRPC.FunctionResolver.name,
+            functionResolver: this.options.universalRPC.FunctionResolver.name(),
         };
         websocketConnection.send({ type: "init", data: initPayload });
         this.logger.verbose(
