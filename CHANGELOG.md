@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.1](https://github.com/yeskiy/prpcow/compare/v1.1.0...v1.1.1) (2023-01-23)
+
+
+### Bug Fixes
+
+* Fix undefined ping/pong module on client-side ([fb27eb8](https://github.com/yeskiy/prpcow/commit/fb27eb890800211fb7076b16b483e85424cf70f5))
+* Fix unhandled `Session is not in opened state` error ([05d0136](https://github.com/yeskiy/prpcow/commit/05d01368df6fb1d25cb35cf090cf5a2931a410ee))
+* Typo fix ([f65ef59](https://github.com/yeskiy/prpcow/commit/f65ef59a54b8d12274a70511bf4835fdd98c3fca))
+
 ## [1.1.0](https://github.com/yeskiy/prpcow/compare/v1.0.12...v1.1.0) (2023-01-23)
 
 
