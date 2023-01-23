@@ -256,7 +256,7 @@ module.exports = class UniversalRPC extends EventEmitter {
         return requestClosePromise;
     }
 
-    addEventlistener(event, listener) {
+    addEventListener(event, listener) {
         return this.addListener(event, listener);
     }
 
