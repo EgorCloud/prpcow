@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.2](https://github.com/yeskiy/prpcow/compare/v1.1.1...v1.1.2) (2023-01-26)
+
+
+### Bug Fixes
+
+* Add types support. Add prebuilt for `CommonJS` and `ESM` ([142dd97](https://github.com/yeskiy/prpcow/commit/142dd97eead73564e00ee4ede03f1a6efbdf326b))
+
 ### [1.1.1](https://github.com/yeskiy/prpcow/compare/v1.1.0...v1.1.1) (2023-01-23)
 
 
