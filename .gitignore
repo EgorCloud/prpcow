@@ -7,7 +7,7 @@ crashlytics-build.properties
 fabric.properties
 cmake-build-*/
 /node_modules
-/build
+/dist
 /.devbuild
 /.env
 /src/assets/public/apidoc

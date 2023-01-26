@@ -97,10 +97,10 @@ module.exports = class RPCServer extends EventEmitter {
                             this.logger.silly("Removed init message listener");
 
                             websocketConnection.on("pong", () => {
-                                this.logger.silly("Pong Received");
+                                // this.logger.silly("Pong Received");
                                 setTimeout(() => {
                                     websocketConnection.ping();
-                                    this.logger.silly("Ping sent");
+                                    // this.logger.silly("Ping sent");
                                 }, 500);
                             });
                             this.logger.silly("Added pong listener");

@@ -2,8 +2,15 @@
     "name": "prpcow",
     "version": "1.1.1",
     "description": "Plain RPC (Remote Procedure Call) over Web socket",
-    "main": "src/index.js",
+    "main": "./dist/esm/src/index.js",
+    "types": "./dist/types/index.d.ts",
+    "exports": {
+        "import": "./dist/esm/src/index.js",
+        "require": "./dist/cjs/src/index.js",
+        "default": "./dist/esm/src/index.js"
+    },
     "scripts": {
+        "prepublish": "tsc --project tsconfig.json && tsc --project tsconfig.esm.json",
         "test": "jest --expose-gc",
         "release": "npx standard-version"
     },
@@ -20,6 +27,7 @@
     },
     "devDependencies": {
         "@jest/globals": "^29.2.2",
+        "@types/ws": "^8.5.4",
         "@typescript-eslint/eslint-plugin": "^5.18.0",
         "@typescript-eslint/parser": "^5.18.0",
         "eslint": "^8.13.0",
@@ -31,7 +39,7 @@
         "eslint-plugin-prettier": "^4.0.0",
         "jest": "^27.5.1",
         "prettier": "^2.6.2",
-        "typescript": "^4.6.3"
+        "typescript": "^4.9.4"
     },
     "engines": {
         "node": ">=16.x"

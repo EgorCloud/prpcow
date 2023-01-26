@@ -25,7 +25,7 @@ PRPCOW is a new kind of RPC, that takes advantage of the advancement in `WebSock
 
 ## Installation
 
-Install `rust-wasmpack-loader` with npm
+Install `prpcow` with npm
 
 ```shell script
   npm i prpcow
