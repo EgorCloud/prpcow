@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.3](https://github.com/yeskiy/prpcow/compare/v1.1.2...v1.1.3) (2023-03-01)
+
+
+### Bug Fixes
+
+* Fix Maximum call stack exceeded when trying to create a stream from client ([e829597](https://github.com/yeskiy/prpcow/commit/e829597b8eb890053ba38afb9e2c965984cf6705))
+
 ### [1.1.2](https://github.com/yeskiy/prpcow/compare/v1.1.1...v1.1.2) (2023-01-26)
 
 
