@@ -75,10 +75,12 @@ module.exports = class DefaultModelResolver extends ModelResolver {
         this.typesModifier = {
             PassThrough: {
                 serialize: (model) => {
-                    // eslint-disable-next-line no-param-reassign
-                    model.__on = model.on;
-                    // eslint-disable-next-line no-param-reassign
-                    model.on = (...params) => model.__on(...params);
+                    if (!model.__on) {
+                        // eslint-disable-next-line no-param-reassign
+                        model.__on = model.on;
+                        // eslint-disable-next-line no-param-reassign
+                        model.on = (...params) => model.__on(...params);
+                    }
                 },
             },
             Function: {
