@@ -6,9 +6,9 @@
         "jest": true
     },
     "extends": [
-        "prettier",
         "airbnb-base",
-        "airbnb-typescript/base"
+        "airbnb-typescript/base",
+        "prettier"
     ],
     "plugins": [
         "prettier",

@@ -6,7 +6,7 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 cmake-build-*/
-/node_modules
+node_modules
 /dist
 /.devbuild
 /.env

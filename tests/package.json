@@ -1,0 +1,19 @@
+{
+    "name": "tests",
+    "version": "1.0.0",
+    "description": "Test package",
+    "main": "index.spec.js",
+    "type": "commonjs",
+    "scripts": {
+        "test": "node --expose-gc ./node_modules/jest/bin/jest.js --runInBand --logHeapUsage --detectOpenHandles --forceExit"
+    },
+    "author": "Yehor Brodskiy",
+    "license": "Inherit",
+    "devDependencies": {
+        "@jest/globals": "^29.4.2",
+        "jest": "^29.4.2"
+    },
+    "dependencies": {
+        "prpcow": "file:.."
+    }
+}

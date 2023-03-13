@@ -1,60 +1,44 @@
+/* eslint-disable no-new */
 const { expect, it, describe } = require("@jest/globals");
 const stream = require("stream");
-const PRPC = require("../src/index");
-
-const logger = (prefix) => ({
-    error(...args) {
-        console.error(`[${prefix}]   ERROR:`, ...args);
-    },
-    warn(...args) {
-        console.warn(`[${prefix}]    WARN: `, ...args);
-    },
-    info(...args) {
-        console.log(`[${prefix}]    INFO:`, ...args);
-    },
-    verbose(...args) {
-        console.log(`[${prefix}] VERBOSE:`, ...args);
-    },
-    debug(...args) {
-        console.log(`[${prefix}]   DEBUG:`, ...args);
-    },
-    silly(...args) {
-        console.log(`[${prefix}]   SILLY:`, ...args);
-    },
-});
+const { consoleTransports } = require("prpcow");
+// eslint-disable-next-line import/no-unresolved
+const { default: Client } = require("prpcow/client");
+// eslint-disable-next-line import/no-unresolved
+const { default: Server } = require("prpcow/server");
 
 describe("Base tests", () => {
     it("should create server", () => {
-        const server = new PRPC().server({
+        const server = new Server({
             ws: {
                 port: 9090,
             },
             logger: {
                 level: "silly",
-                instance: logger("server"),
+                transports: consoleTransports(),
             },
         });
         expect(server).toBeDefined();
     });
     it("should create server and client can connect", async () => {
-        const server = new PRPC().server({
+        const server = new Server({
             ws: {
                 port: 9091,
             },
             logger: {
                 level: "silly",
-                instance: logger("server"),
+                transports: consoleTransports(),
             },
         });
         expect(server).toBeDefined();
         const client = await new Promise((resolve, reject) => {
-            new PRPC().client(
+            new Client(
                 "ws://localhost:9091",
                 [],
                 {
                     logger: {
                         level: "silly",
-                        instance: logger("client"),
+                        transports: consoleTransports(),
                     },
                 },
                 (err, session) => {
@@ -69,13 +53,13 @@ describe("Base tests", () => {
         expect(client).toBeDefined();
     });
     it("should create server and client can connect and send message", async () => {
-        const server = new PRPC().server({
+        const server = new Server({
             ws: {
                 port: 9092,
             },
             logger: {
                 level: "silly",
-                instance: logger("server"),
+                transports: consoleTransports(),
             },
         });
         server.on("newSession", (session) => {
@@ -89,13 +73,13 @@ describe("Base tests", () => {
         });
         expect(server).toBeDefined();
         const client = await new Promise((resolve, reject) => {
-            new PRPC().client(
+            new Client(
                 "ws://localhost:9092",
                 [],
                 {
                     logger: {
                         level: "silly",
-                        instance: logger("client"),
+                        transports: consoleTransports(),
                     },
                 },
                 (err, session) => {
@@ -118,13 +102,13 @@ describe("Base tests", () => {
         expect(result).toEqual("pong");
     });
     it("should create server and client can connect and use stream", async () => {
-        const server = new PRPC().server({
+        const server = new Server({
             ws: {
                 port: 9093,
             },
             logger: {
                 level: "silly",
-                instance: logger("server"),
+                transports: consoleTransports(),
             },
         });
         server.on("newSession", (session) => {
@@ -152,13 +136,13 @@ describe("Base tests", () => {
         });
         expect(server).toBeDefined();
         const client = await new Promise((resolve, reject) => {
-            new PRPC().client(
+            new Client(
                 "ws://localhost:9093",
                 [],
                 {
                     logger: {
                         level: "silly",
-                        instance: logger("client"),
+                        transports: consoleTransports(),
                     },
                 },
                 (err, session) => {
@@ -191,13 +175,13 @@ describe("Base tests", () => {
     });
 
     it("should close connection by .close on server", async () => {
-        const server = new PRPC().server({
+        const server = new Server({
             ws: {
                 port: 9094,
             },
             logger: {
                 level: "silly",
-                instance: logger("server"),
+                transports: consoleTransports(),
             },
         });
         server.on("newSession", (session) => {
@@ -217,13 +201,13 @@ describe("Base tests", () => {
         });
 
         const client = await new Promise((resolve, reject) => {
-            new PRPC().client(
+            new Client(
                 "ws://localhost:9094",
                 [],
                 {
                     logger: {
                         level: "silly",
-                        instance: logger("client"),
+                        transports: consoleTransports(),
                     },
                 },
                 (err, session) => {
@@ -259,13 +243,13 @@ describe("Base tests", () => {
         expect(isClientGotClosed).toBeTruthy();
     });
     it("should send function removing after cleanup check", async () => {
-        const server = new PRPC().server({
+        const server = new Server({
             ws: {
                 port: 9095,
             },
             logger: {
                 level: "silly",
-                instance: logger("server"),
+                transports: consoleTransports(),
             },
         });
         let sessionId = null;
@@ -289,13 +273,13 @@ describe("Base tests", () => {
         });
         expect(server).toBeDefined();
         const client = await new Promise((resolve, reject) => {
-            new PRPC().client(
+            new Client(
                 "ws://localhost:9095",
                 [],
                 {
                     logger: {
                         level: "silly",
-                        instance: logger("client"),
+                        transports: consoleTransports(),
                     },
                 },
                 (err, session) => {
@@ -344,14 +328,15 @@ describe("Base tests", () => {
             ).length
         ).toEqual(2);
     });
+
     it("should create server and client can connect and got an error when connection is lost", async () => {
-        const server = new PRPC().server({
+        const server = new Server({
             ws: {
                 port: 9096,
             },
             logger: {
                 level: "silly",
-                instance: logger("server"),
+                transports: consoleTransports(),
             },
         });
         server.on("newSession", (session) => {
@@ -368,13 +353,13 @@ describe("Base tests", () => {
         });
         expect(server).toBeDefined();
         const client = await new Promise((resolve, reject) => {
-            new PRPC().client(
+            new Client(
                 "ws://localhost:9096",
                 [],
                 {
                     logger: {
                         level: "silly",
-                        instance: logger("client"),
+                        transports: consoleTransports(),
                     },
                 },
                 (err, session) => {
