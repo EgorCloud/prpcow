@@ -1,4 +1,4 @@
-module.exports = async function resultAdapter(result) {
+export default async function resultAdapter(result: () => any): Promise<any> {
     if (result instanceof Error) throw result;
     if (typeof result === "object")
         try {
@@ -8,4 +8,4 @@ module.exports = async function resultAdapter(result) {
         }
     if (typeof result === "function") return resultAdapter(await result());
     return result;
-};
+}

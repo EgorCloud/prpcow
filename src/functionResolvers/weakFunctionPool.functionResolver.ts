@@ -1,14 +1,11 @@
-const crypto = require("crypto");
-const FunctionResolver = require("./index");
-const TextWeakMap = require("../utils/TextWeakMap.util");
-const loggerGenerator = require("../utils/loggerAppender.util");
-const typeAssert = require("../utils/typeAssert.util");
-
-const uuid = () =>
-    crypto
-        .createHash("sha256")
-        .update(new Date().valueOf() + crypto.randomBytes(20).toString("hex"))
-        .digest("hex");
+// eslint-disable-next-line max-classes-per-file
+import { v4 as uuid } from "uuid";
+import winston from "winston";
+import typeAssert, { DataObject } from "../utils/typeAssert.util";
+import { FunctionResolver } from "./index";
+import { ModifiedWebSocket } from "../utils/websocketModifier.util";
+import { ModelResolver } from "../modelResolvers";
+import { LoggerLevels } from "../utils/logger.util";
 
 const constants = {
     errors: {
@@ -16,20 +13,77 @@ const constants = {
     },
 };
 
-module.exports = class WeakFunctionPool extends FunctionResolver {
-    constructor({
-        sendMessage,
-        deSerializeObject,
-        serializeObject,
-        logger,
-        session,
+export class TextWeakMap extends WeakMap {
+    private readonly textAdapter: Map<any, any>;
+
+    constructor(entries?: readonly [object, any][] | null) {
+        super(entries);
+        this.textAdapter = new Map();
+    }
+
+    set(key: any | string, value: any) {
+        // eslint-disable-next-line no-new-wrappers
+        const ObjectKey = new String(key);
+        this.textAdapter.set(key, ObjectKey);
+        return super.set(ObjectKey, value);
+    }
+
+    delete(key: any | string) {
+        const result = super.delete(this.textAdapter.get(key));
+        this.textAdapter.delete(key);
+        return result;
+    }
+
+    get(key: any | string) {
+        return super.get(this.textAdapter.get(key));
+    }
+
+    has(key: any) {
+        return super.has(this.textAdapter.get(key));
+    }
+
+    getTextAdapter() {
+        return this.textAdapter;
+    }
+
+    getTextAdapterKeys() {
+        return Array.from(this.textAdapter.keys());
+    }
+}
+
+export default class WeakFunctionPool extends FunctionResolver {
+    static typeName() {
+        return "WeakFunctionPool";
+    }
+
+    private readonly timeoutSize: number;
+
+    private readonly oursFunctions: { [x: string]: Function };
+
+    private readonly theirsFunctionsWaitPool: {
+        [x: string]: Function;
+    };
+
+    private theirsFunctionsIds: string[];
+
+    private theirsFunctions: TextWeakMap;
+
+    private findUnusedTimeout: any;
+
+    constructor(options: {
+        session: ModifiedWebSocket;
+        sendMessage: (message: any) => any;
+        deSerializeObject: ModelResolver["deserialize"];
+        serializeObject: ModelResolver["serialize"];
+        logger:
+            | {
+                  level?: LoggerLevels;
+                  transports?: winston.transport[];
+                  parentLogger?: winston.Logger;
+              }
+            | boolean;
     }) {
-        super();
-        this.session = session;
-        this.sendMessage = sendMessage;
-        this.logger = loggerGenerator(logger.level, logger.instance, "WFP");
-        this.deSerializeObject = deSerializeObject;
-        this.serializeObject = serializeObject;
+        super(options);
         this.oursFunctions = {};
         this.theirsFunctions = new TextWeakMap();
         this.theirsFunctionsIds = [];
@@ -38,7 +92,7 @@ module.exports = class WeakFunctionPool extends FunctionResolver {
 
         this.findUnusedTimeout = setTimeout(
             function findUnused() {
-                this.#findUnusedFunctions();
+                this.findUnusedFunctions();
                 this.findUnusedTimeout = setTimeout(
                     findUnused.bind(this),
                     this.timeoutSize
@@ -46,42 +100,44 @@ module.exports = class WeakFunctionPool extends FunctionResolver {
             }.bind(this),
             this.timeoutSize
         );
-        // If Session close connection, emit all waiting functions with `connectionLost` Error
-        this.session.addEventListener("close", (code, message) =>
+        this.logger.silly("Created findUnusedTimeout with", {
+            timeoutSize: this.timeoutSize,
+        });
+        // If connection was closed, we need to reject all promises
+        this.options.session.on("close", (code, message) =>
             Object.values(this.theirsFunctionsWaitPool).forEach((item) => {
                 const err = new Error(
                     `Session Connection was closed with code "${code}" ${
                         message ? `and message: "${message}"` : ""
                     }`
                 );
+                // @ts-ignore
                 err.type = constants.errors.CONNECTION_LOST;
+                // @ts-ignore
                 err.__from = "theirs";
                 item(err);
             })
         );
+        this.logger.silly("Mounted event listener on close event");
 
-        this.logger.silly("WFP initialized");
-    }
-
-    static name() {
-        return "WeakFunctionPool";
+        this.logger.silly("Ready to use");
     }
 
     // eslint-disable-next-line class-methods-use-this
-    messageBuilder = (type, requestId, data) => ({
+    private messageBuilder = (type: string, requestId: string, data: any) => ({
         type,
         requestId,
         data,
     });
 
     // eslint-disable-next-line class-methods-use-this
-    baseMessageBuilder = (type, data) => ({
+    private baseMessageBuilder = (type: string, data: any) => ({
         type,
         data,
     });
 
     // eslint-disable-next-line class-methods-use-this
-    executeFunctionCatcher = async (executor, ...params) => {
+    executeFunctionCatcher = async (executor: Function, ...params: any[]) => {
         try {
             return executor(...params);
         } catch (e) {
@@ -91,33 +147,33 @@ module.exports = class WeakFunctionPool extends FunctionResolver {
         }
     };
 
-    async onMessage(message) {
+    public async onMessage(message: DataObject) {
         this.logger.debug("WFP onmessage", message);
         typeAssert(
             message,
             {
                 clear: () => {
                     this.logger.silly("Clear message received");
-                    message.data.ids.map((id) =>
+                    message.data.ids.map((id: string) =>
                         Reflect.deleteProperty(this.oursFunctions, id)
                     );
                     this.logger.debug(`Cleared ${message.data.ids} functions`);
                 },
                 execute: async () => {
                     this.logger.silly("Execute message received");
-                    this.sendMessage(
+                    this.options.sendMessage(
                         this.messageBuilder(
                             "executeResponse",
                             message.requestId,
                             {
                                 id: message.data.id,
-                                payload: this.serializeObject(
+                                payload: await this.options.serializeObject(
                                     await this.executeFunctionCatcher(
-                                        this.getOurs(message.data.id),
-                                        ...this.deSerializeObject(
+                                        await this.getOurs(message.data.id),
+                                        ...(await this.options.deSerializeObject(
                                             message.data.payload,
                                             this.setTheirs.bind(this)
-                                        )
+                                        ))
                                     ),
 
                                     this.setOurs.bind(this)
@@ -126,12 +182,12 @@ module.exports = class WeakFunctionPool extends FunctionResolver {
                         )
                     );
                 },
-                executeResponse: () => {
+                executeResponse: async () => {
                     this.logger.silly(
                         `Got Response on execute =>  ${message.data.id}-${message.requestId}`
                     );
                     this.theirsFunctionsWaitPool[message.requestId](
-                        this.deSerializeObject(
+                        await this.options.deSerializeObject(
                             message.data.payload,
                             this.setTheirs.bind(this)
                         )
@@ -160,17 +216,17 @@ module.exports = class WeakFunctionPool extends FunctionResolver {
         );
     }
 
-    setOurs(executor) {
+    async setOurs(executor: Function) {
         const ident = uuid();
         this.oursFunctions[ident] = executor;
         return ident;
     }
 
-    setTheirs(id) {
+    async setTheirs(id: string) {
         this.logger.silly("setTheirs", id);
         this.theirsFunctions.set(
             id,
-            (...params) =>
+            (...params: any[]) =>
                 new Promise(async (resolve, reject) => {
                     this.logger.debug(
                         "Theirs function wrapper called",
@@ -178,10 +234,11 @@ module.exports = class WeakFunctionPool extends FunctionResolver {
                         params
                     );
                     const requestId = uuid();
-                    this.theirsFunctionsWaitPool[requestId] = (response) => {
+                    this.theirsFunctionsWaitPool[requestId] = (
+                        response: any
+                    ) => {
                         this.logger.silly(
-                            "Got Response by function response Handler",
-                            id
+                            `Got Response by function response Handler (${id})`
                         );
                         if (
                             typeof response === "object" &&
@@ -196,26 +253,24 @@ module.exports = class WeakFunctionPool extends FunctionResolver {
                         }
                     };
                     this.logger.silly(
-                        "Theirs function wrapper added in que",
-                        `${id}-${requestId}`
+                        `Theirs function wrapper added in que (${requestId})`
                     );
                     try {
-                        await this.sendMessage(
+                        await this.options.sendMessage(
                             this.messageBuilder("execute", requestId, {
                                 id,
-                                payload: this.serializeObject(
+                                payload: await this.options.serializeObject(
                                     params,
                                     this.setOurs.bind(this)
                                 ),
                             })
                         );
+                        this.logger.silly(
+                            `Theirs function wrapper request sent (${requestId})`
+                        );
                     } catch (e) {
                         reject(e);
                     }
-                    this.logger.silly(
-                        "Theirs function wrapper request sent",
-                        `${id}-${requestId}`
-                    );
                 })
         );
         this.theirsFunctionsIds.push(id);
@@ -225,14 +280,14 @@ module.exports = class WeakFunctionPool extends FunctionResolver {
     /**
      * @private
      */
-    #findUnusedFunctions() {
+    public findUnusedFunctions() {
         this.logger.debug("finding unused functions");
         const functionIds = this.theirsFunctionsIds
             .map((id) => ({ id, presented: this.theirsFunctions.has(id) }))
             .filter((item) => !item.presented)
             .map((item) => item.id);
         if (functionIds.length) {
-            this.sendMessage(
+            this.options.sendMessage(
                 this.baseMessageBuilder("clear", { ids: functionIds })
             );
             this.logger.debug(`Found ${functionIds.length} functions`);
@@ -240,15 +295,11 @@ module.exports = class WeakFunctionPool extends FunctionResolver {
         }
     }
 
-    findUnusedFunctions() {
-        return this.#findUnusedFunctions();
-    }
-
-    getOurs(id) {
+    async getOurs(id: string) {
         return this.oursFunctions[id] || null;
     }
 
-    getTheirs(id) {
+    getTheirs(id: string) {
         return this.theirsFunctions.has(id)
             ? this.theirsFunctions.get(id)
             : null;
@@ -257,4 +308,4 @@ module.exports = class WeakFunctionPool extends FunctionResolver {
     close() {
         this.findUnusedTimeout.clearTimeout();
     }
-};
+}
