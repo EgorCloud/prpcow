@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0-alpha.0](https://github.com/yeskiy/prpcow/compare/v1.1.3...v2.0.0-alpha.0) (2023-03-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* Code is mostly changed. Client and Server are now Separated. Added ability to use `CompressResolvers`. Moved logger from `console.log` to `winston`. Buffer Polyfills are now integrated. `stream-browserify` installed only for logger support, but it could be used for adding streams on web. `WeakFunctionPool` is still badly cleaning unused functions
+* Moved tests (and jest) to another folder
+* Fully changed tsconfig
+
+### Features
+
+* Added types into dist build ([6dcd971](https://github.com/yeskiy/prpcow/commit/6dcd9710b607bec156dbf8d0a639183c3788fd84))
+* Code moved to ts ([7aa5c4f](https://github.com/yeskiy/prpcow/commit/7aa5c4fdd5a5ad0a8bb9d50e2e578160c9392a67))
+* Fully changed tsconfig ([7da970f](https://github.com/yeskiy/prpcow/commit/7da970f6ae4a01a1e152fcda35ca9bbb4eea7405))
+* Moved tests (and jest) to another folder ([68d5ce7](https://github.com/yeskiy/prpcow/commit/68d5ce73ddb49d2ab99cc8f1786f00f938dc5655))
+
 ### [1.1.3](https://github.com/yeskiy/prpcow/compare/v1.1.2...v1.1.3) (2023-03-01)
 
 
