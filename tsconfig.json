@@ -1,24 +1,22 @@
 {
     "compilerOptions": {
-        "outDir": "dist/cjs",
-        "declarationDir": "dist/types",
+        "moduleResolution": "Node",
+        "resolveJsonModule": true,
+        "esModuleInterop": true,
         "composite": true,
         "experimentalDecorators": true,
         "noImplicitAny": true,
         "sourceMap": true,
-        "module": "CommonJS",
         "target": "ES6",
         "lib": [
             "es6"
         ],
-        "allowJs": true,
-        "moduleResolution": "node"
+        "allowJs": true
     },
     "include": [
-        "src/**/*"
+        "src/**/*",
+        "package.json",
+        "tests/**/*",
+        "scripts/**/*"
     ],
-    "exclude": [
-        "node_modules",
-        "**/*.spec.js"
-    ]
 }

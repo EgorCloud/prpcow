@@ -3,43 +3,70 @@
     "version": "1.1.3",
     "description": "Plain RPC (Remote Procedure Call) over Web socket",
     "main": "./dist/esm/src/index.js",
-    "types": "./dist/types/index.d.ts",
+    "types": "./dist/types/src/index.d.ts",
+    "type": "module",
     "exports": {
-        "import": "./dist/esm/src/index.js",
-        "require": "./dist/cjs/src/index.js",
-        "default": "./dist/esm/src/index.js"
+        ".": {
+            "types": "./dist/types/src/index.d.ts",
+            "require": "./dist/cjs/src/index.js",
+            "import": "./dist/esm/src/index.js",
+            "default": "./dist/esm/src/index.js"
+        },
+        "./client": {
+            "types": "./dist/types/src/client.d.ts",
+            "require": "./dist/cjs/src/client.js",
+            "import": "./dist/esm/src/client.js",
+            "default": "./dist/esm/src/client.js"
+        },
+        "./server": {
+            "types": "./dist/types/src/server.d.ts",
+            "require": "./dist/cjs/src/server.js",
+            "import": "./dist/esm/src/server.js",
+            "default": "./dist/esm/src/server.js"
+        }
     },
     "scripts": {
-        "prepublish": "tsc --project tsconfig.json && tsc --project tsconfig.esm.json",
-        "test": "jest --expose-gc",
-        "release": "npx standard-version"
+        "release": "npx standard-version",
+        "pretest": "npm run build",
+        "test": "cd tests && npm run test",
+        "prepublishOnly": "npm run build",
+        "build": "npm run build:cjs && npm run build:esm && npm run build:types",
+        "build:cjs": "tsc --project tsconfig.cjs.json",
+        "build:esm": "tsc --project tsconfig.esm.json",
+        "build:types": "tsc --project tsconfig.types.json",
+        "postbuild": "node scripts/typings.cjs"
     },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/yeskiy/prpcow.git"
     },
     "dependencies": {
+        "@types/ws": "^8.5.4",
+        "buffer": "^6.0.3",
         "events": "^3.3.0",
-        "isomorphic-ws": "^4.0.1"
+        "isomorphic-ws": "^5.0.0",
+        "semver": "^7.3.8",
+        "stream-browserify": "^3.0.0",
+        "uuid": "^9.0.0",
+        "winston": "^3.8.2"
     },
     "peerDependencies": {
         "ws": "^8.5.0 || ^7.5.0"
     },
     "devDependencies": {
-        "@jest/globals": "^29.2.2",
-        "@types/ws": "^8.5.4",
-        "@typescript-eslint/eslint-plugin": "^5.18.0",
-        "@typescript-eslint/parser": "^5.18.0",
-        "eslint": "^8.13.0",
+        "@types/uuid": "^9.0.1",
+        "@typescript-eslint/eslint-plugin": "^5.51.0",
+        "@typescript-eslint/parser": "^5.51.0",
+        "eslint": "^8.33.0",
         "eslint-config-airbnb-base": "^15.0.0",
         "eslint-config-airbnb-typescript": "^17.0.0",
-        "eslint-config-prettier": "^8.5.0",
-        "eslint-plugin-import": "^2.26.0",
-        "eslint-plugin-jest": "^26.1.4",
-        "eslint-plugin-prettier": "^4.0.0",
-        "jest": "^27.5.1",
-        "prettier": "^2.6.2",
-        "typescript": "^4.9.4"
+        "eslint-config-prettier": "^8.6.0",
+        "eslint-plugin-import": "^2.27.5",
+        "eslint-plugin-jest": "^27.2.1",
+        "eslint-plugin-prettier": "^4.2.1",
+        "npm-check-updates": "^16.6.5",
+        "prettier": "^2.8.4",
+        "typescript": "^4.9.5"
     },
     "engines": {
         "node": ">=16.x"
