@@ -184,7 +184,7 @@ export default class WeakFunctionPool extends FunctionResolver {
                 },
                 executeResponse: async () => {
                     this.logger.silly(
-                        `Got Response on execute =>  ${message.data.id}-${message.requestId}`
+                        `Got Response on execute (${message.requestId})`
                     );
                     this.theirsFunctionsWaitPool[message.requestId](
                         await this.options.deSerializeObject(
@@ -197,7 +197,7 @@ export default class WeakFunctionPool extends FunctionResolver {
                         message.requestId
                     );
                     this.logger.silly(
-                        `Remove from wait pool ${message.data.id}-${message.requestId}`
+                        `Remove from wait pool (${message.requestId})`
                     );
                 },
             },
@@ -269,6 +269,16 @@ export default class WeakFunctionPool extends FunctionResolver {
                             `Theirs function wrapper request sent (${requestId})`
                         );
                     } catch (e) {
+                        this.logger.silly(
+                            `Theirs function wrapper request failed (${requestId})`
+                        );
+                        Reflect.deleteProperty(
+                            this.theirsFunctionsWaitPool,
+                            requestId
+                        );
+                        this.logger.silly(
+                            `Remove from wait pool (${requestId})`
+                        );
                         reject(e);
                     }
                 })
