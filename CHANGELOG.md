@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0-alpha.2](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.1...v2.0.0-alpha.2) (2023-03-15)
+
+
+### Bug Fixes
+
+* Remove winston ([8117ac8](https://github.com/yeskiy/prpcow/commit/8117ac81bdebed8607efb7475126736c8e12249e))
+
 ## [2.0.0-alpha.1](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.0...v2.0.0-alpha.1) (2023-03-14)
 
 
