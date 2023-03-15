@@ -43,30 +43,30 @@ export class Logger {
     }
 
     public info(...message: any[]) {
-        this.logger.info(...message);
+        this.logger.log(...message);
     }
 
     public log(...message: any[]) {
-        this.logger.info(...message);
+        this.logger.log(...message);
     }
 
     public req(...message: any[]) {
-        this.logger.info(...message);
+        this.logger.log(...message);
     }
 
     public http(...message: any[]) {
-        this.logger.info(...message);
+        this.logger.log(...message);
     }
 
     public verbose(...message: any[]) {
-        this.logger.verbose(...message);
+        this.logger.log(...message);
     }
 
     public debug(...message: any[]) {
-        this.logger.debug(...message);
+        this.logger.log(...message);
     }
 
     public silly(...message: any[]) {
-        this.logger.silly(...message);
+        this.logger.log(...message);
     }
 }

@@ -1,7 +1,6 @@
 /* eslint-disable no-new */
 const { expect, it, describe } = require("@jest/globals");
 const stream = require("stream");
-const { consoleTransports } = require("prpcow");
 // eslint-disable-next-line import/no-unresolved
 const { default: Client } = require("prpcow/client");
 // eslint-disable-next-line import/no-unresolved
@@ -13,7 +12,7 @@ describe("Base tests", () => {
             ws: {
                 port: 9090,
             },
-            logger: { level: "silly", transports: consoleTransports() },
+            logger: { level: "silly" },
         });
         expect(server).toBeDefined();
     });
@@ -24,7 +23,6 @@ describe("Base tests", () => {
             },
             logger: {
                 level: "silly",
-                transports: consoleTransports(),
             },
         });
         expect(server).toBeDefined();
@@ -35,7 +33,6 @@ describe("Base tests", () => {
                 {
                     logger: {
                         level: "silly",
-                        transports: consoleTransports(),
                     },
                 },
                 (err, session) => {
@@ -56,7 +53,6 @@ describe("Base tests", () => {
             },
             logger: {
                 level: "silly",
-                transports: consoleTransports(),
             },
         });
         server.on("newSession", (session) => {
@@ -76,7 +72,6 @@ describe("Base tests", () => {
                 {
                     logger: {
                         level: "silly",
-                        transports: consoleTransports(),
                     },
                 },
                 (err, session) => {
@@ -105,7 +100,6 @@ describe("Base tests", () => {
             },
             logger: {
                 level: "silly",
-                transports: consoleTransports(),
             },
         });
         server.on("newSession", (session) => {
@@ -139,7 +133,6 @@ describe("Base tests", () => {
                 {
                     logger: {
                         level: "silly",
-                        transports: consoleTransports(),
                     },
                 },
                 (err, session) => {
@@ -178,7 +171,6 @@ describe("Base tests", () => {
             },
             logger: {
                 level: "silly",
-                transports: consoleTransports(),
             },
         });
         server.on("newSession", (session) => {
@@ -204,7 +196,6 @@ describe("Base tests", () => {
                 {
                     logger: {
                         level: "silly",
-                        transports: consoleTransports(),
                     },
                 },
                 (err, session) => {
@@ -246,7 +237,7 @@ describe("Base tests", () => {
     //         },
     //         logger: {
     //             level: "silly",
-    //             transports: consoleTransports(),
+    //
     //         },
     //     });
     //     let sessionId = null;
@@ -276,7 +267,7 @@ describe("Base tests", () => {
     //             {
     //                 logger: {
     //                     level: "silly",
-    //                     transports: consoleTransports(),
+    //
     //                 },
     //             },
     //             (err, session) => {
@@ -333,7 +324,6 @@ describe("Base tests", () => {
             },
             logger: {
                 level: "silly",
-                transports: consoleTransports(),
             },
         });
         server.on("newSession", (session) => {
@@ -356,7 +346,6 @@ describe("Base tests", () => {
                 {
                     logger: {
                         level: "silly",
-                        transports: consoleTransports(),
                     },
                 },
                 (err, session) => {
