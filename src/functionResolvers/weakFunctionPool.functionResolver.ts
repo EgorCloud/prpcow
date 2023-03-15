@@ -1,6 +1,5 @@
 // eslint-disable-next-line max-classes-per-file
 import { v4 as uuid } from "uuid";
-import winston from "winston";
 import typeAssert, { DataObject } from "../utils/typeAssert.util";
 import { FunctionResolver } from "./index";
 import { ModifiedWebSocket } from "../utils/websocketModifier.util";
@@ -78,8 +77,8 @@ export default class WeakFunctionPool extends FunctionResolver {
         logger:
             | {
                   level?: LoggerLevels;
-                  transports?: winston.transport[];
-                  parentLogger?: winston.Logger;
+                  transports?: any;
+                  parentLogger?: any;
               }
             | boolean;
     }) {

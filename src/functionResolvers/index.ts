@@ -1,4 +1,3 @@
-import winston from "winston";
 import { DataObject } from "../utils/typeAssert.util";
 import { ModifiedWebSocket } from "../utils/websocketModifier.util";
 import { Logger, LoggerLevels } from "../utils/logger.util";
@@ -14,8 +13,8 @@ export abstract class FunctionResolver {
         logger:
             | {
                   level?: LoggerLevels;
-                  transports?: winston.transport[];
-                  parentLogger?: winston.Logger;
+                  transports?: any;
+                  parentLogger?: any;
               }
             | boolean;
     };
@@ -30,8 +29,8 @@ export abstract class FunctionResolver {
         logger:
             | {
                   level?: LoggerLevels;
-                  transports?: winston.transport[];
-                  parentLogger?: winston.Logger;
+                  transports?: any;
+                  parentLogger?: any;
               }
             | boolean;
     }) {
@@ -75,8 +74,8 @@ export interface IFunctionResolver {
         logger:
             | {
                   level?: LoggerLevels;
-                  transports?: winston.transport[];
-                  parentLogger?: winston.Logger;
+                  transports?: any;
+                  parentLogger?: any;
               }
             | boolean;
     }): FunctionResolver;

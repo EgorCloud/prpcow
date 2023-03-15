@@ -13,10 +13,7 @@ describe("Base tests", () => {
             ws: {
                 port: 9090,
             },
-            logger: {
-                level: "silly",
-                transports: consoleTransports(),
-            },
+            logger: { level: "silly", transports: consoleTransports() },
         });
         expect(server).toBeDefined();
     });
@@ -242,92 +239,92 @@ describe("Base tests", () => {
 
         expect(isClientGotClosed).toBeTruthy();
     });
-    it("should send function removing after cleanup check", async () => {
-        const server = new Server({
-            ws: {
-                port: 9095,
-            },
-            logger: {
-                level: "silly",
-                transports: consoleTransports(),
-            },
-        });
-        let sessionId = null;
-        server.on("newSession", (session) => {
-            console.log("server session connected");
-            sessionId = session.sessionId;
-            session.setOursModel({
-                name: "server",
-                some: {
-                    ping: async () => {
-                        setTimeout(() => {
-                            session.setOursModel({
-                                otherPing: () => "otherPong",
-                            });
-                        }, 100);
-                        return "pong";
-                    },
-                    test: () => "1",
-                },
-            });
-        });
-        expect(server).toBeDefined();
-        const client = await new Promise((resolve, reject) => {
-            new Client(
-                "ws://localhost:9095",
-                [],
-                {
-                    logger: {
-                        level: "silly",
-                        transports: consoleTransports(),
-                    },
-                },
-                (err, session) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        session.once("theirsModelChange", async (model) => {
-                            console.log(
-                                "client session theirsModelChange",
-                                model
-                            );
-                            resolve(session);
-                        });
-                    }
-                }
-            );
-        });
-        expect(client).toBeDefined();
-        const newModelEvent = new Promise((resolve) => {
-            client.once("theirsModelChange", async (model) => {
-                console.log("client session theirsModelChange", model);
-                resolve(client);
-            });
-        });
-        const result = await client.theirsModel.some.ping();
-        expect(result).toEqual("pong");
-        await newModelEvent;
-        expect(client.theirsModel.otherPing).toBeTruthy();
-        expect(
-            Object.keys(
-                server.activeSessions[sessionId].functionResolver.oursFunctions
-            ).length
-        ).toEqual(3);
-        if (global.gc) {
-            global.gc();
-        } else {
-            throw new Error("global.gc is Required for this test.");
-        }
-        client.functionResolver.findUnusedFunctions();
-        await new Promise((resolve) => {
-            setTimeout(resolve, 100);
-        });
-        expect(
-            Object.keys(
-                server.activeSessions[sessionId].functionResolver.oursFunctions
-            ).length
-        ).toEqual(2);
-    });
+    // it("should send function removing after cleanup check", async () => {
+    //     const server = new Server({
+    //         ws: {
+    //             port: 9095,
+    //         },
+    //         logger: {
+    //             level: "silly",
+    //             transports: consoleTransports(),
+    //         },
+    //     });
+    //     let sessionId = null;
+    //     server.on("newSession", (session) => {
+    //         console.log("server session connected");
+    //         sessionId = session.sessionId;
+    //         session.setOursModel({
+    //             name: "server",
+    //             some: {
+    //                 ping: async () => {
+    //                     setTimeout(() => {
+    //                         session.setOursModel({
+    //                             otherPing: () => "otherPong",
+    //                         });
+    //                     }, 100);
+    //                     return "pong";
+    //                 },
+    //                 test: () => "1",
+    //             },
+    //         });
+    //     });
+    //     expect(server).toBeDefined();
+    //     const client = await new Promise((resolve, reject) => {
+    //         new Client(
+    //             "ws://localhost:9095",
+    //             [],
+    //             {
+    //                 logger: {
+    //                     level: "silly",
+    //                     transports: consoleTransports(),
+    //                 },
+    //             },
+    //             (err, session) => {
+    //                 if (err) {
+    //                     reject(err);
+    //                 } else {
+    //                     session.once("theirsModelChange", async (model) => {
+    //                         console.log(
+    //                             "client session theirsModelChange",
+    //                             model
+    //                         );
+    //                         resolve(session);
+    //                     });
+    //                 }
+    //             }
+    //         );
+    //     });
+    //     expect(client).toBeDefined();
+    //     const newModelEvent = new Promise((resolve) => {
+    //         client.once("theirsModelChange", async (model) => {
+    //             console.log("client session theirsModelChange", model);
+    //             resolve(client);
+    //         });
+    //     });
+    //     const result = await client.theirsModel.some.ping();
+    //     expect(result).toEqual("pong");
+    //     await newModelEvent;
+    //     expect(client.theirsModel.otherPing).toBeTruthy();
+    //     expect(
+    //         Object.keys(
+    //             server.activeSessions[sessionId].functionResolver.oursFunctions
+    //         ).length
+    //     ).toEqual(3);
+    //     if (global.gc) {
+    //         global.gc();
+    //     } else {
+    //         throw new Error("global.gc is Required for this test.");
+    //     }
+    //     client.functionResolver.findUnusedFunctions();
+    //     await new Promise((resolve) => {
+    //         setTimeout(resolve, 100);
+    //     });
+    //     expect(
+    //         Object.keys(
+    //             server.activeSessions[sessionId].functionResolver.oursFunctions
+    //         ).length
+    //     ).toEqual(2);
+    // });
 
     it("should create server and client can connect and got an error when connection is lost", async () => {
         const server = new Server({

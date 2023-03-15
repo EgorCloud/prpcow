@@ -1,7 +1,6 @@
 import Websocket from "isomorphic-ws";
 // @ts-ignore
 import WebSocketType from "@type/ws";
-import winston from "winston";
 import semver from "semver";
 import websocketModifier, {
     ModifiedWebSocket,
@@ -34,8 +33,8 @@ export default class Client {
         logger?:
             | {
                   level: LoggerLevels;
-                  transports: winston.transport[];
-                  parentLogger: winston.Logger;
+                  transports: any;
+                  parentLogger: any;
               }
             | boolean;
         callback: Function;
@@ -60,8 +59,8 @@ export default class Client {
             logger?:
                 | {
                       level: LoggerLevels;
-                      transports: winston.transport[];
-                      parentLogger: winston.Logger;
+                      transports: any;
+                      parentLogger: any;
                   }
                 | boolean;
         },

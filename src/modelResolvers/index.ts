@@ -1,4 +1,3 @@
-import winston from "winston";
 import { ModifiedWebSocket } from "../utils/websocketModifier.util";
 import { Logger, LoggerLevels } from "../utils/logger.util";
 import { FunctionResolverFunction } from "../types";
@@ -9,8 +8,8 @@ export abstract class ModelResolver {
         logger:
             | {
                   level?: LoggerLevels;
-                  transports?: winston.transport[];
-                  parentLogger?: winston.Logger;
+                  transports?: any;
+                  parentLogger?: any;
               }
             | boolean;
     };
@@ -22,8 +21,8 @@ export abstract class ModelResolver {
         logger:
             | {
                   level?: LoggerLevels;
-                  transports?: winston.transport[];
-                  parentLogger?: winston.Logger;
+                  transports?: any;
+                  parentLogger?: any;
               }
             | boolean;
     }) {
@@ -64,8 +63,8 @@ export interface IModelResolver {
         logger:
             | {
                   level?: LoggerLevels;
-                  transports?: winston.transport[];
-                  parentLogger?: winston.Logger;
+                  transports?: any;
+                  parentLogger?: any;
               }
             | boolean;
     }): ModelResolver;

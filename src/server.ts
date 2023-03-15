@@ -1,7 +1,6 @@
 import Websocket from "isomorphic-ws";
 import { EventEmitter } from "events";
 import { v4 as uuid } from "uuid";
-import winston from "winston";
 import semver from "semver";
 import * as http from "http";
 import WeakFunctionPool from "./functionResolvers/weakFunctionPool.functionResolver";
@@ -31,8 +30,8 @@ export default class Server extends EventEmitter {
         logger?:
             | {
                   level: LoggerLevels;
-                  transports: winston.transport[];
-                  parentLogger: winston.Logger;
+                  transports: any;
+                  parentLogger: any;
               }
             | boolean;
         universalRPC: {
@@ -54,8 +53,8 @@ export default class Server extends EventEmitter {
         logger?:
             | {
                   level: LoggerLevels;
-                  transports: winston.transport[];
-                  parentLogger: winston.Logger;
+                  transports: any;
+                  parentLogger: any;
               }
             | boolean;
     }) {

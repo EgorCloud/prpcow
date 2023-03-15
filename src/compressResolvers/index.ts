@@ -1,5 +1,4 @@
 import Websocket from "isomorphic-ws";
-import winston from "winston";
 import { BufferLike, ModifiedWebSocket } from "../utils/websocketModifier.util";
 import { Logger, LoggerLevels } from "../utils/logger.util";
 
@@ -9,8 +8,8 @@ export abstract class CompressResolver {
         logger:
             | {
                   level?: LoggerLevels;
-                  transports?: winston.transport[];
-                  parentLogger?: winston.Logger;
+                  transports?: any;
+                  parentLogger?: any;
               }
             | boolean;
     };
@@ -22,8 +21,8 @@ export abstract class CompressResolver {
         logger:
             | {
                   level?: LoggerLevels;
-                  transports?: winston.transport[];
-                  parentLogger?: winston.Logger;
+                  transports?: any;
+                  parentLogger?: any;
               }
             | boolean;
     }) {
@@ -59,8 +58,8 @@ export interface ICompressResolver {
         logger:
             | {
                   level?: LoggerLevels;
-                  transports?: winston.transport[];
-                  parentLogger?: winston.Logger;
+                  transports?: any;
+                  parentLogger?: any;
               }
             | boolean;
     }): CompressResolver;

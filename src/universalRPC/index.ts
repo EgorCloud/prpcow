@@ -1,5 +1,4 @@
 import EventEmitter from "events";
-import winston from "winston";
 import { FunctionResolver, IFunctionResolver } from "../functionResolvers";
 import { IModelResolver, ModelResolver } from "../modelResolvers";
 import { CompressResolver, ICompressResolver } from "../compressResolvers";
@@ -17,8 +16,8 @@ export default class UniversalRPC extends EventEmitter {
         logger:
             | {
                   level?: LoggerLevels;
-                  transports?: winston.transport[];
-                  parentLogger?: winston.Logger;
+                  transports?: any;
+                  parentLogger?: any;
               }
             | boolean;
     };
@@ -50,8 +49,8 @@ export default class UniversalRPC extends EventEmitter {
             logger:
                 | {
                       level?: LoggerLevels;
-                      transports?: winston.transport[];
-                      parentLogger?: winston.Logger;
+                      transports?: any;
+                      parentLogger?: any;
                   }
                 | boolean;
         }

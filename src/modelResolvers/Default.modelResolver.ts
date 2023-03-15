@@ -1,5 +1,4 @@
 import { Buffer } from "buffer";
-import winston from "winston";
 import { ModelResolver } from "./index";
 import { FunctionResolver } from "../functionResolvers";
 import { ModifiedWebSocket } from "../utils/websocketModifier.util";
@@ -49,8 +48,8 @@ export default class DefaultModelResolver extends ModelResolver {
         logger:
             | {
                   level?: LoggerLevels;
-                  transports?: winston.transport[];
-                  parentLogger?: winston.Logger;
+                  transports?: any;
+                  parentLogger?: any;
               }
             | boolean;
     }) {

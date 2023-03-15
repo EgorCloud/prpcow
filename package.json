@@ -43,13 +43,13 @@
     },
     "dependencies": {
         "@types/ws": "^8.5.4",
+        "browser-util-inspect": "^0.2.0",
         "buffer": "^6.0.3",
         "events": "^3.3.0",
         "isomorphic-ws": "^5.0.0",
         "semver": "^7.3.8",
         "stream-browserify": "^3.0.0",
-        "uuid": "^9.0.0",
-        "winston": "^3.8.2"
+        "uuid": "^9.0.0"
     },
     "peerDependencies": {
         "ws": "^8.5.0 || ^7.5.0"
@@ -73,8 +73,7 @@
         "node": ">=16.x"
     },
     "files": [
-        "dist",
-        "src"
+        "dist"
     ],
     "keywords": [
         "RPC",
