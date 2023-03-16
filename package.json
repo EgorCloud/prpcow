@@ -28,11 +28,9 @@
         "url": "git+https://github.com/yeskiy/prpcow.git"
     },
     "dependencies": {
-        "browser-util-inspect": "^0.2.0",
         "buffer": "^6.0.3",
         "events": "^3.3.0",
         "semver": "^7.3.8",
-        "stream-browserify": "^3.0.0",
         "uuid": "^9.0.0"
     },
     "peerDependencies": {
