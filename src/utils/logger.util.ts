@@ -7,66 +7,136 @@ export type LoggerLevels =
     | "debug"
     | "silly";
 
+export const LoggerLevelsArray: LoggerLevels[] = [
+    "error",
+    "warn",
+    "info",
+    "http",
+    "verbose",
+    "debug",
+    "silly",
+];
+
 const compatibilityLevels = {
-    error: "error",
-    warn: "warn",
-    info: "log",
-    http: "http",
-    verbose: "log",
-    debug: "log",
-    silly: "log",
+    error: console.error,
+    warn: console.warn,
+    info: console.info,
+    log: console.log,
+    http: console.log,
+    verbose: console.log,
+    debug: console.debug,
+    silly: console.log,
 };
+
+const generateLevelInput = (level: string, size = 5) =>
+    `${Array.from({ length: size - level.length }, () => " ").join(
+        ""
+    )}${level}`;
+
+export function consoleLogTransport(info: LoggerMessage): void | Promise<void> {
+    compatibilityLevels[info.level](
+        `(${new Date().toLocaleString()}) ${generateLevelInput(
+            info.level
+        )} [${info.meta.level.join(" > ")}]:`,
+        ...info.message
+    );
+}
+
+export type LoggerMessage = {
+    level: LoggerLevels;
+    message: any[];
+    meta: {
+        level: string[];
+        [x: string]: any;
+    };
+};
+
+export type LoggerOptions = {
+    name?: string;
+    level?: LoggerLevels;
+    callback?: (info: LoggerMessage) => void | Promise<void>;
+    parentLogger?: Logger;
+};
+
+export type LoggerChildOptions = Required<
+    Omit<LoggerOptions, "level" | "callback">
+>;
 export class Logger {
-    logger: any;
+    private options: LoggerOptions;
 
-    meta: any;
+    public name: string;
 
-    static child(parentLogger: Logger, name: string | boolean = false): Logger {
-        return new Logger(name, undefined, undefined, parentLogger);
+    public nameLevel: string[];
+
+    public callback: (info: LoggerMessage) => void | Promise<void>;
+
+    private level: LoggerLevels;
+
+    static child(options: LoggerChildOptions): Logger {
+        return new Logger(options);
     }
 
-    constructor(
-        name: string | boolean = false,
-        level?: LoggerLevels,
-        transports?: any[],
-        parentLogger?: Logger
-    ) {
-        this.logger = console;
+    constructor(options?: LoggerOptions) {
+        this.options = options || {};
+        if (this.options.parentLogger) {
+            this.name = this.options.name ?? "";
+            this.nameLevel = [
+                ...this.options.parentLogger.nameLevel,
+                this.name,
+            ];
+            this.callback = this.options.parentLogger.callback;
+        } else {
+            this.level = this.options.level ?? "info";
+            this.callback = this.options.callback ?? (() => {});
+            this.name = this.options.name ?? "";
+            this.nameLevel = [this.name];
+        }
+    }
+
+    private execute(level: LoggerLevels, ...message: any[]) {
+        if (
+            LoggerLevelsArray.indexOf(level) >=
+            LoggerLevelsArray.indexOf(this.level)
+        ) {
+            this.callback({
+                level,
+                message,
+                meta: {
+                    level: this.nameLevel,
+                },
+            });
+        }
     }
 
     public error(...message: any[]) {
-        this.logger.error(...message);
+        this.execute("error", ...message);
     }
 
     public warn(...message: any[]) {
-        this.logger.warn(...message);
+        this.execute("warn", ...message);
     }
 
     public info(...message: any[]) {
-        this.logger.log(...message);
+        this.execute("info", ...message);
     }
 
     public log(...message: any[]) {
-        this.logger.log(...message);
-    }
-
-    public req(...message: any[]) {
-        this.logger.log(...message);
+        this.execute("info", ...message);
     }
 
     public http(...message: any[]) {
-        this.logger.log(...message);
+        this.execute("http", ...message);
     }
 
     public verbose(...message: any[]) {
-        this.logger.log(...message);
+        this.execute("verbose", ...message);
     }
 
     public debug(...message: any[]) {
-        this.logger.log(...message);
+        this.execute("debug", ...message);
     }
 
     public silly(...message: any[]) {
-        this.logger.log(...message);
+        this.execute("silly", ...message);
     }
 }

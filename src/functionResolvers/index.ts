@@ -1,6 +1,6 @@
 import { DataObject } from "../utils/typeAssert.util";
 import { ModifiedWebSocket } from "../utils/websocketModifier.util";
-import { Logger, LoggerLevels } from "../utils/logger.util";
+import { Logger, LoggerOptions } from "../utils/logger.util";
 import { ModelResolver } from "../modelResolvers";
 import { FunctionResolverFunction } from "../types";
 
@@ -10,13 +10,7 @@ export abstract class FunctionResolver {
         sendMessage: (message: any) => Promise<void>;
         deSerializeObject: ModelResolver["deserialize"];
         serializeObject: ModelResolver["serialize"];
-        logger:
-            | {
-                  level?: LoggerLevels;
-                  transports?: any;
-                  parentLogger?: any;
-              }
-            | boolean;
+        logger: LoggerOptions | boolean;
     };
 
     protected logger: Logger;
@@ -26,24 +20,16 @@ export abstract class FunctionResolver {
         sendMessage: (message: any) => Promise<void>;
         deSerializeObject: ModelResolver["deserialize"];
         serializeObject: ModelResolver["serialize"];
-        logger:
-            | {
-                  level?: LoggerLevels;
-                  transports?: any;
-                  parentLogger?: any;
-              }
-            | boolean;
+        logger: LoggerOptions | boolean;
     }) {
         this.options = options;
         if (typeof this.options.logger !== "boolean") {
-            this.logger = new Logger(
-                `${Object.getPrototypeOf(this).constructor.typeName()}`,
-                this.options.logger.level,
-                this.options.logger.transports,
-                this.options.logger.parentLogger
-            );
+            this.logger = new Logger({
+                ...this.options.logger,
+                name: `${Object.getPrototypeOf(this).constructor.typeName()}`,
+            });
         } else {
-            this.logger = new Logger(false, "info", []);
+            this.logger = new Logger();
         }
     }
 
@@ -71,13 +57,7 @@ export interface IFunctionResolver {
         sendMessage: (message: any) => Promise<void>;
         deSerializeObject: ModelResolver["deserialize"];
         serializeObject: ModelResolver["serialize"];
-        logger:
-            | {
-                  level?: LoggerLevels;
-                  transports?: any;
-                  parentLogger?: any;
-              }
-            | boolean;
+        logger: LoggerOptions | boolean;
     }): FunctionResolver;
 
     typeName(): string;

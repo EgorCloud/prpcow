@@ -4,7 +4,7 @@ import typeAssert, { DataObject } from "../utils/typeAssert.util";
 import { FunctionResolver } from "./index";
 import { ModifiedWebSocket } from "../utils/websocketModifier.util";
 import { ModelResolver } from "../modelResolvers";
-import { LoggerLevels } from "../utils/logger.util";
+import { LoggerOptions } from "../utils/logger.util";
 
 const constants = {
     errors: {
@@ -74,13 +74,7 @@ export default class WeakFunctionPool extends FunctionResolver {
         sendMessage: (message: any) => any;
         deSerializeObject: ModelResolver["deserialize"];
         serializeObject: ModelResolver["serialize"];
-        logger:
-            | {
-                  level?: LoggerLevels;
-                  transports?: any;
-                  parentLogger?: any;
-              }
-            | boolean;
+        logger: LoggerOptions | boolean;
     }) {
         super(options);
         this.oursFunctions = {};
@@ -103,11 +97,11 @@ export default class WeakFunctionPool extends FunctionResolver {
             timeoutSize: this.timeoutSize,
         });
         // If connection was closed, we need to reject all promises
-        this.options.session.on("close", (code, message) =>
+        this.options.session.addEventListener("close", ({ code, reason }) =>
             Object.values(this.theirsFunctionsWaitPool).forEach((item) => {
                 const err = new Error(
                     `Session Connection was closed with code "${code}" ${
-                        message ? `and message: "${message}"` : ""
+                        reason ? `and message: "${reason}"` : ""
                     }`
                 );
                 // @ts-ignore

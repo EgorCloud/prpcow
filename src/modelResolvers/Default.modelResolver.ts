@@ -2,7 +2,7 @@ import { Buffer } from "buffer";
 import { ModelResolver } from "./index";
 import { FunctionResolver } from "../functionResolvers";
 import { ModifiedWebSocket } from "../utils/websocketModifier.util";
-import { LoggerLevels } from "../utils/logger.util";
+import { LoggerOptions } from "../utils/logger.util";
 
 export default class DefaultModelResolver extends ModelResolver {
     private primitiveValues: string[];
@@ -45,13 +45,7 @@ export default class DefaultModelResolver extends ModelResolver {
 
     constructor(options: {
         session: ModifiedWebSocket;
-        logger:
-            | {
-                  level?: LoggerLevels;
-                  transports?: any;
-                  parentLogger?: any;
-              }
-            | boolean;
+        logger: LoggerOptions | boolean;
     }) {
         super(options);
         const primitiveBuilder =

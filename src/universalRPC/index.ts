@@ -2,7 +2,7 @@ import EventEmitter from "events";
 import { FunctionResolver, IFunctionResolver } from "../functionResolvers";
 import { IModelResolver, ModelResolver } from "../modelResolvers";
 import { CompressResolver, ICompressResolver } from "../compressResolvers";
-import { Logger, LoggerLevels } from "../utils/logger.util";
+import { Logger, LoggerOptions } from "../utils/logger.util";
 import { ModifiedWebSocket } from "../utils/websocketModifier.util";
 import typeAssert, { DataObject } from "../utils/typeAssert.util";
 import RuntimeError from "../utils/error.utils";
@@ -13,13 +13,7 @@ export default class UniversalRPC extends EventEmitter {
         FunctionResolver: IFunctionResolver;
         ModelResolver: IModelResolver;
         CompressResolver: ICompressResolver;
-        logger:
-            | {
-                  level?: LoggerLevels;
-                  transports?: any;
-                  parentLogger?: any;
-              }
-            | boolean;
+        logger: LoggerOptions | boolean;
     };
 
     private readonly logger: Logger;
@@ -32,11 +26,11 @@ export default class UniversalRPC extends EventEmitter {
 
     private readonly functionResolver: FunctionResolver;
 
-    private compressResolver: CompressResolver;
+    private readonly compressResolver: CompressResolver;
 
     private _theirsModel: any;
 
-    private _oursModel: {};
+    private _oursModel: any;
 
     private _closeRequestSides: any;
 
@@ -46,26 +40,18 @@ export default class UniversalRPC extends EventEmitter {
             FunctionResolver: IFunctionResolver;
             ModelResolver: IModelResolver;
             CompressResolver: ICompressResolver;
-            logger:
-                | {
-                      level?: LoggerLevels;
-                      transports?: any;
-                      parentLogger?: any;
-                  }
-                | boolean;
+            logger: LoggerOptions | boolean;
         }
     ) {
         super();
         this.options = options;
         if (typeof this.options.logger !== "boolean") {
-            this.logger = new Logger(
-                `URPC`,
-                this.options.logger.level,
-                this.options.logger.transports,
-                this.options.logger.parentLogger
-            );
+            this.logger = new Logger({
+                ...this.options.logger,
+                name: `URPC`,
+            });
         } else {
-            this.logger = new Logger(false, "info", []);
+            this.logger = new Logger();
         }
 
         // CloseRequest-specific params
@@ -82,7 +68,7 @@ export default class UniversalRPC extends EventEmitter {
         this.modelResolver = new this.options.ModelResolver({
             session: this.session,
             logger: {
-                parentLogger: this.logger.logger,
+                parentLogger: this.logger,
             },
         });
 
@@ -97,7 +83,7 @@ export default class UniversalRPC extends EventEmitter {
                 this.modelResolver
             ),
             logger: {
-                parentLogger: this.logger.logger,
+                parentLogger: this.logger,
             },
         });
 
@@ -105,7 +91,7 @@ export default class UniversalRPC extends EventEmitter {
         this.compressResolver = new this.options.CompressResolver({
             session: this.session,
             logger: {
-                parentLogger: this.logger.logger,
+                parentLogger: this.logger,
             },
         });
 
@@ -124,9 +110,10 @@ export default class UniversalRPC extends EventEmitter {
     private async send(data: any) {
         if (this.session.readyState !== this.session.OPEN)
             throw new Error("Session is not in opened state");
-        return this.session.sendWithPrepare(
-            data,
-            this.compressResolver.compress.bind(this.compressResolver)
+        return this.session.send(
+            await this.compressResolver.compress.bind(this.compressResolver)(
+                data
+            )
         );
     }
 
@@ -136,13 +123,7 @@ export default class UniversalRPC extends EventEmitter {
             newModel !== null
         ) {
             this._theirsModel = new Proxy(newModel, {
-                get: (target, prop) => {
-                    const value = Reflect.get(target, prop);
-                    if (value) {
-                        return value;
-                    }
-                    throw new Error("Cannot get non-existed element");
-                },
+                get: (target, prop) => Reflect.get(target, prop),
                 set: () => {
                     throw new Error("Cannot change values in TheirsModel");
                 },
@@ -198,11 +179,9 @@ export default class UniversalRPC extends EventEmitter {
                         await Promise.all(
                             this.listeners("closeRequest").map((item) => item())
                         );
-                        this.send(
-                            JSON.stringify({
-                                type: "closeRequestConfirm",
-                            })
-                        );
+                        await this.send({
+                            type: "closeRequestConfirm",
+                        });
                     },
                     closeRequestConfirm: async () => {
                         this.logger.silly(
@@ -222,6 +201,14 @@ export default class UniversalRPC extends EventEmitter {
                             throw new Error("Close request not created");
                         }
                     },
+                    ready: async () => {
+                        this.logger.silly("Ready event received");
+                        this.logger.warn(
+                            `Ready event is already received on previous connector. Ignoring... 
+                            This bug occurs mostly on React Native, but can be on other platforms too. 
+                            If you are facing this bug and your platform is not React Native, please, create an issue on GitHub`
+                        );
+                    },
                 },
                 () => {
                     throw new Error("Unexpected Type");
@@ -229,19 +216,19 @@ export default class UniversalRPC extends EventEmitter {
             );
         } catch (e) {
             this.logger.error(e);
-            this.send(badRequestUtil(e));
-            this.error(e);
+            await this.send(badRequestUtil(e));
+            await this.error(e);
             this.logger.silly(`Event "error" emitted`);
             this.session.close();
             this.logger.silly(`Session closed`);
-            this.close();
+            await this.close();
             this.logger.silly(`Event "close" emitted`);
         }
     }
 
     private async sendUpgradeModel(model: any) {
         this.logger.debug("Sending upgrade model:", model);
-        this.send({
+        return this.send({
             type: "upgradeModel",
             data: model,
         });
@@ -302,15 +289,7 @@ export default class UniversalRPC extends EventEmitter {
         return this.addListener(event, listener);
     }
 
-    /**
-     * Set ours model
-     * @param newModel - new model
-     */
-    public setOursModel(newModel: any) {
-        this.oursModel = newModel;
-    }
-
-    set oursModel(newModel) {
+    set oursModel(newModel: any) {
         this.logger.silly("Upgrade oursModel started (set oursModel)");
 
         this._oursModel = new Proxy(newModel, {
@@ -318,54 +297,41 @@ export default class UniversalRPC extends EventEmitter {
                 this.logger.silly(
                     `Upgrade ${prop as string} to ${value} in oursModel started`
                 );
+
                 Reflect.set(target, prop, value);
-                // eslint-disable-next-line no-new
-                new Promise(async (resolve: Function, reject) => {
-                    try {
-                        this.sendUpgradeModel(
-                            await this.modelResolver.serialize(
-                                this.oursModel,
-                                this.functionResolver.setOurs.bind(
-                                    this.functionResolver
-                                )
-                            )
-                        );
-                        resolve();
-                        this.logger.silly(
-                            `Upgrade ${
-                                prop as string
-                            } to ${value} in oursModel done. Waiting for send`
-                        );
-                    } catch (e) {
-                        reject(e);
-                    }
-                });
+
+                this.sendOursModel();
+                this.logger.silly(
+                    `Upgrade ${
+                        prop as string
+                    } to ${value} in oursModel done. Waiting for send`
+                );
                 return true;
             },
         });
         this.logger.silly("Upgrade oursModel done. Waiting for send");
-
-        // eslint-disable-next-line no-new
-        new Promise(async (resolve: Function, reject) => {
-            try {
-                this.sendUpgradeModel(
-                    await this.modelResolver.serialize(
-                        this.oursModel,
-                        this.functionResolver.setOurs.bind(
-                            this.functionResolver
-                        )
-                    )
-                );
-                this.logger.debug("Sent upgrade model");
-                resolve();
-            } catch (e) {
-                reject(e);
-            }
-        });
+        this.sendOursModel();
     }
 
     get oursModel() {
         return this._oursModel || {};
+    }
+
+    public async setOursModel(newModel: any) {
+        this.logger.silly("Upgrade oursModel started (setOursModel)");
+        this._oursModel = newModel;
+        this.logger.silly("Upgrade oursModel done. Waiting for send");
+        this.sendOursModel();
+    }
+
+    private async sendOursModel() {
+        await this.sendUpgradeModel(
+            await this.modelResolver.serialize(
+                this.oursModel,
+                this.functionResolver.setOurs.bind(this.functionResolver)
+            )
+        );
+        this.logger.debug("Sent upgrade model");
     }
 
     get theirsModel() {

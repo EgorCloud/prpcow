@@ -1,7 +1,5 @@
-import Websocket from "isomorphic-ws";
-// @ts-ignore
-import WebSocketType from "@type/ws";
 import semver from "semver";
+import WebSocket from "ws";
 import websocketModifier, {
     ModifiedWebSocket,
 } from "./utils/websocketModifier.util";
@@ -12,60 +10,56 @@ import typeAssert from "./utils/typeAssert.util";
 import RuntimeError from "./utils/error.utils";
 import UniversalRPC from "./universalRPC";
 import badRequestUtil from "./utils/badRequest.util";
-import { Logger, LoggerLevels } from "./utils/logger.util";
+import { Logger, LoggerOptions } from "./utils/logger.util";
 import NoCompressionResolver from "./compressResolvers/noCompression.compressionResolver";
 import { ICompressResolver } from "./compressResolvers";
 import { IFunctionResolver } from "./functionResolvers";
 import { IModelResolver } from "./modelResolvers";
 
-export default class Client {
-    private readonly WebsocketImplementation: WebSocketType;
+interface WebsocketProto {
+    prototype: WebSocket;
+    new (address: string | URL, protocols: String | String[]): WebSocket;
+}
+
+export type ClientOptions = {
+    callback?: Function;
+    universalRPC?: {
+        FunctionResolver?: IFunctionResolver;
+        ModelResolver?: IModelResolver;
+        CompressResolver?: ICompressResolver;
+    };
+    logger?: LoggerOptions | boolean;
+};
+
+type ClientInnerOptions = ClientOptions & {
+    callback: Function;
+    universalRPC: {
+        FunctionResolver: IFunctionResolver;
+        ModelResolver: IModelResolver;
+        CompressResolver: ICompressResolver;
+    };
+    version: string;
+};
+
+export class Client {
+    private readonly WebsocketImplementation: WebsocketProto;
 
     private callback: Function;
 
     websocket: ModifiedWebSocket;
 
-    private readonly logger: any;
+    private readonly logger: Logger;
 
     public key: string;
 
-    private options: {
-        logger?:
-            | {
-                  level: LoggerLevels;
-                  transports: any;
-                  parentLogger: any;
-              }
-            | boolean;
-        callback: Function;
-        universalRPC: {
-            FunctionResolver: IFunctionResolver;
-            ModelResolver: IModelResolver;
-            CompressResolver: ICompressResolver;
-        };
-        version: string;
-    };
+    private options: ClientInnerOptions;
 
     constructor(
+        WebsocketImplementation: WebsocketProto,
         address: string | URL,
         protocols: String | String[],
-        options: {
-            callback?: Function;
-            universalRPC?: {
-                FunctionResolver?: IFunctionResolver;
-                ModelResolver?: IModelResolver;
-                CompressResolver?: ICompressResolver;
-            };
-            logger?:
-                | {
-                      level: LoggerLevels;
-                      transports: any;
-                      parentLogger: any;
-                  }
-                | boolean;
-        },
-        callback: Function = () => {},
-        WebsocketImplementation?: Websocket
+        options: ClientOptions,
+        callback: Function = () => {}
     ) {
         const finalOptions = options || {};
         this.options = {
@@ -79,19 +73,16 @@ export default class Client {
             },
             version: packageJson.version,
         };
-        this.WebsocketImplementation =
-            WebsocketImplementation || (Websocket as WebSocketType);
+        this.WebsocketImplementation = WebsocketImplementation;
         this.callback = options.callback || callback;
 
         if (typeof this.options.logger !== "boolean") {
-            this.logger = new Logger(
-                "Client",
-                this.options.logger.level,
-                this.options.logger.transports,
-                this.options.logger.parentLogger
-            );
+            this.logger = new Logger({
+                ...this.options.logger,
+                name: "Client",
+            });
         } else {
-            this.logger = new Logger(false, "info", []);
+            this.logger = new Logger();
         }
 
         this.websocket = websocketModifier(
@@ -107,7 +98,7 @@ export default class Client {
 
     private init = () =>
         new Promise((resolve, reject) => {
-            const initMessageOperator = (event: Websocket.MessageEvent) => {
+            const initMessageOperator = (event: WebSocket.MessageEvent) => {
                 this.logger.silly("Got message from server");
                 try {
                     const clientRequest = JSON.parse(event.data as string);
@@ -215,10 +206,12 @@ export default class Client {
                                         initPayload
                                     )}`
                                 );
-                                this.websocket.send({
-                                    type: "init",
-                                    data: initPayload,
-                                });
+                                this.websocket.send(
+                                    JSON.stringify({
+                                        type: "init",
+                                        data: initPayload,
+                                    })
+                                );
                                 this.logger.silly(
                                     `Init message sent to server`
                                 );
@@ -235,7 +228,7 @@ export default class Client {
                                     this.websocket,
                                     {
                                         logger: {
-                                            parentLogger: this.logger.logger,
+                                            parentLogger: this.logger,
                                         },
                                         ...this.options.universalRPC,
                                     }
@@ -278,7 +271,7 @@ export default class Client {
                 } catch (e) {
                     this.logger.silly(`Error occurred`);
                     this.logger.error(e);
-                    this.websocket.send(badRequestUtil(e));
+                    this.websocket.send(JSON.stringify(badRequestUtil(e)));
                     this.logger.silly(`Bad request sent to server`);
                     this.websocket.close();
                     this.logger.silly(`Websocket closed`);

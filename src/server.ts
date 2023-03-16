@@ -1,8 +1,8 @@
-import Websocket from "isomorphic-ws";
 import { EventEmitter } from "events";
 import { v4 as uuid } from "uuid";
 import semver from "semver";
 import * as http from "http";
+import WebSocket from "ws";
 import WeakFunctionPool from "./functionResolvers/weakFunctionPool.functionResolver";
 import DefaultResolver from "./modelResolvers/Default.modelResolver";
 import packageJson from "../package.json";
@@ -13,51 +13,41 @@ import typeAssert from "./utils/typeAssert.util";
 import RuntimeError from "./utils/error.utils";
 import UniversalRPC from "./universalRPC";
 import badRequestUtil from "./utils/badRequest.util";
-import { Logger, LoggerLevels } from "./utils/logger.util";
+import { Logger, LoggerOptions } from "./utils/logger.util";
 import NoCompressionResolver from "./compressResolvers/noCompression.compressionResolver";
 import { IFunctionResolver } from "./functionResolvers";
 import { IModelResolver } from "./modelResolvers";
 import { ICompressResolver } from "./compressResolvers";
 
-export default class Server extends EventEmitter {
-    websocket: Websocket.Server<Websocket.WebSocket>;
+export type ServerOptions = {
+    ws: WebSocket.ServerOptions;
+    universalRPC?: {
+        FunctionResolver?: IFunctionResolver;
+        ModelResolver?: IModelResolver;
+        CompressResolver?: ICompressResolver;
+    };
+    logger?: LoggerOptions | boolean;
+};
+
+type ServerInnerOptions = ServerOptions & {
+    universalRPC: {
+        FunctionResolver: IFunctionResolver;
+        ModelResolver: IModelResolver;
+        CompressResolver: ICompressResolver;
+    };
+    version: string;
+};
+
+export class Server extends EventEmitter {
+    websocket: WebSocket.Server;
 
     private readonly logger: Logger;
 
     private readonly activeSessions: { [x: string]: UniversalRPC };
 
-    private options: {
-        logger?:
-            | {
-                  level: LoggerLevels;
-                  transports: any;
-                  parentLogger: any;
-              }
-            | boolean;
-        universalRPC: {
-            FunctionResolver: IFunctionResolver;
-            ModelResolver: IModelResolver;
-            CompressResolver: ICompressResolver;
-        };
-        ws: Websocket.ServerOptions;
-        version: string;
-    };
+    private options: ServerInnerOptions;
 
-    constructor(options: {
-        ws: Websocket.ServerOptions;
-        universalRPC?: {
-            FunctionResolver?: IFunctionResolver;
-            ModelResolver?: IModelResolver;
-            CompressResolver?: ICompressResolver;
-        };
-        logger?:
-            | {
-                  level: LoggerLevels;
-                  transports: any;
-                  parentLogger: any;
-              }
-            | boolean;
-    }) {
+    constructor(options: ServerOptions) {
         super();
         this.options = {
             ws: {},
@@ -73,17 +63,15 @@ export default class Server extends EventEmitter {
         this.activeSessions = {};
 
         if (typeof this.options.logger !== "boolean") {
-            this.logger = new Logger(
-                "Server",
-                this.options.logger.level,
-                this.options.logger.transports,
-                this.options.logger.parentLogger
-            );
+            this.logger = new Logger({
+                ...this.options.logger,
+                name: "Server",
+            });
         } else {
-            this.logger = new Logger(false, "info", []);
+            this.logger = new Logger();
         }
 
-        this.websocket = new Websocket.Server(options.ws);
+        this.websocket = new WebSocket.Server(options.ws);
 
         this.websocket.on("connection", (websocketInstance, request) => {
             this.logger.silly("New connection");
@@ -106,10 +94,13 @@ export default class Server extends EventEmitter {
         const _request = request;
         const key = websocketInstance.sessionId;
         const keyPart = key.slice(-4);
-        const requestLogger = Logger.child(this.logger.logger, `${keyPart}`);
+        const requestLogger = Logger.child({
+            parentLogger: this.logger,
+            name: `Session ${keyPart}`,
+        });
         requestLogger.silly("onConnection event emitted");
 
-        const initMessageOperator = (messageText: Websocket.MessageEvent) => {
+        const initMessageOperator = (messageText: WebSocket.MessageEvent) => {
             requestLogger.silly(`Received new message by init operator`);
 
             try {
@@ -200,7 +191,7 @@ export default class Server extends EventEmitter {
                                 websocketInstance,
                                 {
                                     logger: {
-                                        parentLogger: requestLogger.logger,
+                                        parentLogger: requestLogger,
                                     },
                                     ...this.options.universalRPC,
                                 }
@@ -224,10 +215,12 @@ export default class Server extends EventEmitter {
                             });
                             requestLogger.silly("Added pong listener");
 
-                            websocketInstance.send({
-                                type: "ready",
-                                data: { key },
-                            });
+                            websocketInstance.send(
+                                JSON.stringify({
+                                    type: "ready",
+                                    data: { key },
+                                })
+                            );
 
                             websocketInstance.ping();
                             requestLogger.silly("Initial Ping sent");
@@ -252,7 +245,7 @@ export default class Server extends EventEmitter {
             } catch (e) {
                 requestLogger.error(e);
 
-                websocketInstance.send(badRequestUtil(e));
+                websocketInstance.send(JSON.stringify(badRequestUtil(e)));
                 websocketInstance.close();
             }
         };
@@ -269,7 +262,9 @@ export default class Server extends EventEmitter {
             compressResolver:
                 this.options.universalRPC.CompressResolver.typeName(),
         };
-        websocketInstance.send({ type: "init", data: initPayload });
+        websocketInstance.send(
+            JSON.stringify({ type: "init", data: initPayload })
+        );
         requestLogger.debug(`Sent init status with message:`, initPayload);
     }
 

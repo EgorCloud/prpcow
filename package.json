@@ -1,29 +1,15 @@
 {
     "name": "prpcow",
     "version": "2.0.0-alpha.3",
-    "description": "Plain RPC (Remote Procedure Call) over Web socket",
+    "description": "Plain RPC (Remote Procedure Call) over WebSocket",
     "main": "./dist/esm/src/index.js",
     "types": "./dist/types/src/index.d.ts",
     "type": "module",
     "exports": {
-        ".": {
-            "types": "./dist/types/src/index.d.ts",
-            "require": "./dist/cjs/src/index.js",
-            "import": "./dist/esm/src/index.js",
-            "default": "./dist/esm/src/index.js"
-        },
-        "./client": {
-            "types": "./dist/types/src/client.d.ts",
-            "require": "./dist/cjs/src/client.js",
-            "import": "./dist/esm/src/client.js",
-            "default": "./dist/esm/src/client.js"
-        },
-        "./server": {
-            "types": "./dist/types/src/server.d.ts",
-            "require": "./dist/cjs/src/server.js",
-            "import": "./dist/esm/src/server.js",
-            "default": "./dist/esm/src/server.js"
-        }
+        "types": "./dist/types/src/index.d.ts",
+        "require": "./dist/cjs/src/index.js",
+        "import": "./dist/esm/src/index.js",
+        "default": "./dist/esm/src/index.js"
     },
     "scripts": {
         "release": "npx standard-version",
@@ -42,11 +28,9 @@
         "url": "git+https://github.com/yeskiy/prpcow.git"
     },
     "dependencies": {
-        "@types/ws": "^8.5.4",
         "browser-util-inspect": "^0.2.0",
         "buffer": "^6.0.3",
         "events": "^3.3.0",
-        "isomorphic-ws": "^5.0.0",
         "semver": "^7.3.8",
         "stream-browserify": "^3.0.0",
         "uuid": "^9.0.0"
@@ -56,6 +40,7 @@
     },
     "devDependencies": {
         "@types/uuid": "^9.0.1",
+        "@types/ws": "^8.5.4",
         "@typescript-eslint/eslint-plugin": "^5.51.0",
         "@typescript-eslint/parser": "^5.51.0",
         "eslint": "^8.33.0",

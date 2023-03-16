@@ -1,10 +1,8 @@
 /* eslint-disable no-new */
 const { expect, it, describe } = require("@jest/globals");
 const stream = require("stream");
-// eslint-disable-next-line import/no-unresolved
-const { default: Client } = require("prpcow/client");
-// eslint-disable-next-line import/no-unresolved
-const { default: Server } = require("prpcow/server");
+const { Client, Server, consoleLogTransport } = require("prpcow");
+const WebSocket = require("ws");
 
 describe("Base tests", () => {
     it("should create server", () => {
@@ -23,16 +21,19 @@ describe("Base tests", () => {
             },
             logger: {
                 level: "silly",
+                callback: consoleLogTransport,
             },
         });
         expect(server).toBeDefined();
         const client = await new Promise((resolve, reject) => {
             new Client(
+                WebSocket,
                 "ws://localhost:9091",
                 [],
                 {
                     logger: {
                         level: "silly",
+                        callback: consoleLogTransport,
                     },
                 },
                 (err, session) => {
@@ -53,6 +54,7 @@ describe("Base tests", () => {
             },
             logger: {
                 level: "silly",
+                callback: consoleLogTransport,
             },
         });
         server.on("newSession", (session) => {
@@ -67,11 +69,13 @@ describe("Base tests", () => {
         expect(server).toBeDefined();
         const client = await new Promise((resolve, reject) => {
             new Client(
+                WebSocket,
                 "ws://localhost:9092",
                 [],
                 {
                     logger: {
                         level: "silly",
+                        callback: consoleLogTransport,
                     },
                 },
                 (err, session) => {
@@ -100,6 +104,7 @@ describe("Base tests", () => {
             },
             logger: {
                 level: "silly",
+                callback: consoleLogTransport,
             },
         });
         server.on("newSession", (session) => {
@@ -128,11 +133,13 @@ describe("Base tests", () => {
         expect(server).toBeDefined();
         const client = await new Promise((resolve, reject) => {
             new Client(
+                WebSocket,
                 "ws://localhost:9093",
                 [],
                 {
                     logger: {
                         level: "silly",
+                        callback: consoleLogTransport,
                     },
                 },
                 (err, session) => {
@@ -171,6 +178,7 @@ describe("Base tests", () => {
             },
             logger: {
                 level: "silly",
+                callback: consoleLogTransport,
             },
         });
         server.on("newSession", (session) => {
@@ -191,11 +199,13 @@ describe("Base tests", () => {
 
         const client = await new Promise((resolve, reject) => {
             new Client(
+                WebSocket,
                 "ws://localhost:9094",
                 [],
                 {
                     logger: {
                         level: "silly",
+                        callback: consoleLogTransport,
                     },
                 },
                 (err, session) => {
@@ -236,7 +246,7 @@ describe("Base tests", () => {
     //             port: 9095,
     //         },
     //         logger: {
-    //             level: "silly",
+    //             level: "silly",  callback: consoleLogTransport,
     //
     //         },
     //     });
@@ -262,11 +272,12 @@ describe("Base tests", () => {
     //     expect(server).toBeDefined();
     //     const client = await new Promise((resolve, reject) => {
     //         new Client(
+    //             WebSocket,
     //             "ws://localhost:9095",
     //             [],
     //             {
     //                 logger: {
-    //                     level: "silly",
+    //                     level: "silly",  callback: consoleLogTransport,
     //
     //                 },
     //             },
@@ -324,6 +335,7 @@ describe("Base tests", () => {
             },
             logger: {
                 level: "silly",
+                callback: consoleLogTransport,
             },
         });
         server.on("newSession", (session) => {
@@ -341,11 +353,13 @@ describe("Base tests", () => {
         expect(server).toBeDefined();
         const client = await new Promise((resolve, reject) => {
             new Client(
+                WebSocket,
                 "ws://localhost:9096",
                 [],
                 {
                     logger: {
                         level: "silly",
+                        callback: consoleLogTransport,
                     },
                 },
                 (err, session) => {
