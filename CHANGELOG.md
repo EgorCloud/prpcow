@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0-alpha.5](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.4...v2.0.0-alpha.5) (2023-03-16)
+
+
+### Bug Fixes
+
+* Remove useless packages ([7b99bfc](https://github.com/yeskiy/prpcow/commit/7b99bfc34094214dfc5310e9e908a5c38286df8d))
+
 ## [2.0.0-alpha.4](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.3...v2.0.0-alpha.4) (2023-03-16)
 
 
