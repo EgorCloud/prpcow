@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0-alpha.6](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.5...v2.0.0-alpha.6) (2023-03-19)
+
+
+### Bug Fixes
+
+* Add pure-uuid to fix crypto problem (temp  solution) ([4638f14](https://github.com/yeskiy/prpcow/commit/4638f14527b69cee087081b6b84e79a6a7b33e30))
+
 ## [2.0.0-alpha.5](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.4...v2.0.0-alpha.5) (2023-03-16)
 
 
