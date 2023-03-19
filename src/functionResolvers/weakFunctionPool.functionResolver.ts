@@ -1,6 +1,6 @@
 // eslint-disable-next-line max-classes-per-file
-import { v4 as uuid } from "uuid";
 import typeAssert, { DataObject } from "../utils/typeAssert.util";
+import { uuidv4 as uuid } from "../utils/uuid.util";
 import { FunctionResolver } from "./index";
 import { ModifiedWebSocket } from "../utils/websocketModifier.util";
 import { ModelResolver } from "../modelResolvers";
