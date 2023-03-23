@@ -22,11 +22,11 @@ export default class DefaultModelResolver extends ModelResolver {
             deserialize?: (
                 model: any,
                 getFunction: FunctionResolver["setTheirs"]
-            ) => Promise<any>;
+            ) => Promise<any> | any;
             serialize?: (
                 model: any,
                 getFunctionId: FunctionResolver["setOurs"]
-            ) => Promise<string>;
+            ) => Promise<string> | string;
         };
     };
 
@@ -35,7 +35,7 @@ export default class DefaultModelResolver extends ModelResolver {
             serialize?: (
                 model: any,
                 getFunctionId: FunctionResolver["setOurs"]
-            ) => Promise<any | void>;
+            ) => Promise<any | void> | any | void;
         };
     };
 
@@ -106,21 +106,19 @@ export default class DefaultModelResolver extends ModelResolver {
         };
         this.overloadedTypes = {
             Date: {
-                serialize: async (model) => model.toISOString(),
-                deserialize: async (model) => new Date(model.value),
+                serialize: (model) => model.toISOString(),
+                deserialize: (model) => new Date(model.value),
             },
             Function: {
-                deserialize: async (model, getFunction) =>
-                    getFunction(model.id),
+                deserialize: (model, getFunction) => getFunction(model.id),
             },
             AsyncFunction: {
-                deserialize: async (model, getFunction) =>
-                    getFunction(model.id),
+                deserialize: (model, getFunction) => getFunction(model.id),
             },
         };
         this.typesModifier = {
             PassThrough: {
-                serialize: async (model) => {
+                serialize: (model) => {
                     if (!model.__on) {
                         // eslint-disable-next-line no-param-reassign
                         model.__on = model.on;
@@ -130,22 +128,19 @@ export default class DefaultModelResolver extends ModelResolver {
                 },
             },
             Function: {
-                serialize: async (model, getFunctionId) => ({
-                    id: await getFunctionId(model),
+                serialize: (model, getFunctionId) => ({
+                    id: getFunctionId(model),
                 }),
             },
             AsyncFunction: {
-                serialize: async (model, getFunctionId) => ({
-                    id: await getFunctionId(model),
+                serialize: (model, getFunctionId) => ({
+                    id: getFunctionId(model),
                 }),
             },
         };
     }
 
-    async serialize(
-        affectedModel: any,
-        getFunction: FunctionResolver["setOurs"]
-    ) {
+    serialize(affectedModel: any, getFunction: FunctionResolver["setOurs"]) {
         const model = affectedModel;
         const returnValue: {
             type?: string;
@@ -160,14 +155,14 @@ export default class DefaultModelResolver extends ModelResolver {
             }
 
             if (this.overloadedTypes[returnValue.type]?.serialize) {
-                returnValue.value = await this.overloadedTypes[
+                returnValue.value = this.overloadedTypes[
                     returnValue.type
                 ].serialize(model, getFunction);
             } else if (this.primitiveValues.indexOf(returnValue.type) === -1) {
                 returnValue.value = {};
 
                 if (this.typesModifier[returnValue.type]) {
-                    const result = await this.typesModifier[
+                    const result = this.typesModifier[
                         returnValue.type
                     ].serialize?.(model, getFunction);
                     if (result && typeof result === "object") {
@@ -184,7 +179,7 @@ export default class DefaultModelResolver extends ModelResolver {
                 ) {
                     const item = Object.getOwnPropertyNames(model)[i];
                     item !== "prototype" &&
-                        (returnValue.value[item] = await this.serialize(
+                        (returnValue.value[item] = this.serialize(
                             model[item],
                             getFunction
                         ));
@@ -206,7 +201,7 @@ export default class DefaultModelResolver extends ModelResolver {
                             Object.getPrototypeOf(model)
                         )[i];
                         item !== "constructor" &&
-                            (returnValue.value[item] = await this.serialize(
+                            (returnValue.value[item] = this.serialize(
                                 model[item],
                                 getFunction
                             ));

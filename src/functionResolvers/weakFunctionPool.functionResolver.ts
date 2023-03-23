@@ -154,26 +154,33 @@ export default class WeakFunctionPool extends FunctionResolver {
                 },
                 execute: async () => {
                     this.logger.silly("Execute message received");
-                    this.options.sendMessage(
-                        this.messageBuilder(
-                            "executeResponse",
-                            message.requestId,
-                            {
-                                id: message.data.id,
-                                payload: await this.options.serializeObject(
-                                    await this.executeFunctionCatcher(
-                                        await this.getOurs(message.data.id),
-                                        ...(await this.options.deSerializeObject(
-                                            message.data.payload,
-                                            this.setTheirs.bind(this)
-                                        ))
-                                    ),
+                    try {
+                        await this.options.sendMessage(
+                            this.messageBuilder(
+                                "executeResponse",
+                                message.requestId,
+                                {
+                                    id: message.data.id,
+                                    payload: await this.options.serializeObject(
+                                        await this.executeFunctionCatcher(
+                                            await this.getOurs(message.data.id),
+                                            ...(await this.options.deSerializeObject(
+                                                message.data.payload,
+                                                this.setTheirs.bind(this)
+                                            ))
+                                        ),
 
-                                    this.setOurs.bind(this)
-                                ),
-                            }
-                        )
-                    );
+                                        this.setOurs.bind(this)
+                                    ),
+                                }
+                            )
+                        );
+                    } catch (e) {
+                        this.logger.warn(
+                            `Error on execute function (function id: ${message.data.id}, request id: ${message.requestId})`,
+                            e
+                        );
+                    }
                 },
                 executeResponse: async () => {
                     this.logger.silly(
@@ -209,13 +216,13 @@ export default class WeakFunctionPool extends FunctionResolver {
         );
     }
 
-    async setOurs(executor: Function) {
+    setOurs(executor: Function) {
         const ident = uuid();
         this.oursFunctions[ident] = executor;
         return ident;
     }
 
-    async setTheirs(id: string) {
+    setTheirs(id: string) {
         this.logger.silly("setTheirs", id);
         this.theirsFunctions.set(
             id,
@@ -298,7 +305,7 @@ export default class WeakFunctionPool extends FunctionResolver {
         }
     }
 
-    async getOurs(id: string) {
+    getOurs(id: string) {
         return this.oursFunctions[id] || null;
     }
 

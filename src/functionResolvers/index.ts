@@ -36,17 +36,25 @@ export abstract class FunctionResolver {
     static typeName(): string {
         throw new Error("typeName() implementation is required");
     }
-    public abstract onMessage(message: DataObject): Promise<void>;
+    public abstract onMessage(message: DataObject): Promise<void> | void;
 
-    public abstract setOurs(executor: Function): Promise<string>;
+    public abstract setOurs(executor: Function): Promise<string> | string;
 
-    public abstract getOurs(id: string): Promise<Function> | Promise<null>;
+    public abstract getOurs(
+        id: string
+    ): Promise<Function> | Promise<null> | Function | null;
 
-    public abstract setTheirs(id: string): Promise<FunctionResolverFunction>;
+    public abstract setTheirs(
+        id: string
+    ): Promise<FunctionResolverFunction> | FunctionResolverFunction;
 
     public abstract getTheirs(
         id: string
-    ): Promise<FunctionResolverFunction> | Promise<null>;
+    ):
+        | Promise<FunctionResolverFunction>
+        | Promise<null>
+        | FunctionResolverFunction
+        | null;
 
     public abstract close(): void;
 }
