@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0-alpha.7](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.6...v2.0.0-alpha.7) (2023-03-23)
+
+
+### Bug Fixes
+
+* Fix `Session is not in opened state` Error. Back to sync model resolver ([1b0902d](https://github.com/yeskiy/prpcow/commit/1b0902d3926818742f31621153327fee357dff9e))
+
 ## [2.0.0-alpha.6](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.5...v2.0.0-alpha.6) (2023-03-19)
 
 
