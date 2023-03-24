@@ -34,15 +34,13 @@ export abstract class ModelResolver {
     }
     public abstract serialize(
         model: any,
-        getFunctionId: (executor: Function) => Promise<string> | string
-    ): Promise<object> | object;
+        getFunctionId: (executor: Function) => string
+    ): object;
 
     public abstract deserialize(
         model: any,
-        getFunctionWrapper: (
-            id: string
-        ) => Promise<FunctionResolverFunction> | FunctionResolverFunction
-    ): Promise<any> | any;
+        getFunctionWrapper: (id: string) => FunctionResolverFunction
+    ): any;
 }
 
 export interface IModelResolver {

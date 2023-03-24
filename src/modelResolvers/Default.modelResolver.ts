@@ -13,29 +13,29 @@ export default class DefaultModelResolver extends ModelResolver {
 
     private ignoredTypes: { null: null; undefined: undefined };
 
-    private genericTypes: {
+    private readonly genericTypes: {
         [key: string]: any;
     };
 
-    private overloadedTypes: {
+    private readonly overloadedTypes: {
         [key: string]: {
             deserialize?: (
                 model: any,
                 getFunction: FunctionResolver["setTheirs"]
-            ) => Promise<any> | any;
+            ) => any;
             serialize?: (
                 model: any,
                 getFunctionId: FunctionResolver["setOurs"]
-            ) => Promise<string> | string;
+            ) => string;
         };
     };
 
-    private typesModifier: {
+    private readonly typesModifier: {
         [key: string]: {
             serialize?: (
                 model: any,
                 getFunctionId: FunctionResolver["setOurs"]
-            ) => Promise<any | void> | any | void;
+            ) => any | void;
         };
     };
 

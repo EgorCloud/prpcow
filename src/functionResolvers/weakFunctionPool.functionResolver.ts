@@ -161,13 +161,13 @@ export default class WeakFunctionPool extends FunctionResolver {
                                 message.requestId,
                                 {
                                     id: message.data.id,
-                                    payload: await this.options.serializeObject(
+                                    payload: this.options.serializeObject(
                                         await this.executeFunctionCatcher(
-                                            await this.getOurs(message.data.id),
-                                            ...(await this.options.deSerializeObject(
+                                            this.getOurs(message.data.id),
+                                            ...this.options.deSerializeObject(
                                                 message.data.payload,
                                                 this.setTheirs.bind(this)
-                                            ))
+                                            )
                                         ),
 
                                         this.setOurs.bind(this)
@@ -187,7 +187,7 @@ export default class WeakFunctionPool extends FunctionResolver {
                         `Got Response on execute (${message.requestId})`
                     );
                     this.theirsFunctionsWaitPool[message.requestId](
-                        await this.options.deSerializeObject(
+                        this.options.deSerializeObject(
                             message.data.payload,
                             this.setTheirs.bind(this)
                         )
@@ -259,7 +259,7 @@ export default class WeakFunctionPool extends FunctionResolver {
                         await this.options.sendMessage(
                             this.messageBuilder("execute", requestId, {
                                 id,
-                                payload: await this.options.serializeObject(
+                                payload: this.options.serializeObject(
                                     params,
                                     this.setOurs.bind(this)
                                 ),
