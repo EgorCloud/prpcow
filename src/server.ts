@@ -18,6 +18,8 @@ import NoCompressionResolver from "./compressResolvers/noCompression.compression
 import { IFunctionResolver } from "./functionResolvers";
 import { IModelResolver } from "./modelResolvers";
 import { ICompressResolver } from "./compressResolvers";
+import { IIdResolver } from "./idResolvers";
+import UuidIdResolver from "./idResolvers/uuid.idResolver";
 
 export type ServerOptions = {
     ws: WebSocket.ServerOptions;
@@ -25,6 +27,7 @@ export type ServerOptions = {
         FunctionResolver?: IFunctionResolver;
         ModelResolver?: IModelResolver;
         CompressResolver?: ICompressResolver;
+        IdResolver?: IIdResolver;
     };
     logger?: LoggerOptions | boolean;
 };
@@ -34,6 +37,7 @@ type ServerInnerOptions = ServerOptions & {
         FunctionResolver: IFunctionResolver;
         ModelResolver: IModelResolver;
         CompressResolver: ICompressResolver;
+        IdResolver: IIdResolver;
     };
     version: string;
 };
@@ -56,6 +60,7 @@ export class Server extends EventEmitter {
                 FunctionResolver: WeakFunctionPool,
                 ModelResolver: DefaultResolver,
                 CompressResolver: NoCompressionResolver,
+                IdResolver: UuidIdResolver,
                 ...options.universalRPC,
             },
             version: packageJson.version,
@@ -121,13 +126,19 @@ export class Server extends EventEmitter {
                                     semver.eq(
                                         this.options.version,
                                         clientRequest.data.version
-                                    ) ||
-                                    clientRequest.data.functionResolver ===
-                                        this.options.universalRPC.FunctionResolver.typeName() ||
-                                    clientRequest.data.modelResolver ===
-                                        this.options.universalRPC.ModelResolver.typeName() ||
-                                    clientRequest.data.CompressResolver ===
-                                        this.options.universalRPC.CompressResolver.typeName()
+                                    ) &&
+                                    this.options.universalRPC.FunctionResolver.isCompatibleWith(
+                                        clientRequest.data.functionResolver
+                                    ) &&
+                                    this.options.universalRPC.ModelResolver.isCompatibleWith(
+                                        clientRequest.data.modelResolver
+                                    ) &&
+                                    this.options.universalRPC.CompressResolver.isCompatibleWith(
+                                        clientRequest.data.compressResolver
+                                    ) &&
+                                    this.options.universalRPC.IdResolver.isCompatibleWith(
+                                        clientRequest.data.idResolver
+                                    )
                                 )
                             ) {
                                 requestLogger.silly(
@@ -142,7 +153,10 @@ export class Server extends EventEmitter {
                                         clientRequest.data.modelResolver
                                     }`,
                                     `Server compressResolver: ${this.options.universalRPC.CompressResolver.typeName()}, Client compressResolver: ${
-                                        clientRequest.data.CompressResolver
+                                        clientRequest.data.compressResolver
+                                    }`,
+                                    `Server idResolver: ${this.options.universalRPC.IdResolver.typeName()}, Client idResolver: ${
+                                        clientRequest.data.idResolver
                                     }`
                                 );
                                 throw new RuntimeError(
@@ -154,28 +168,39 @@ export class Server extends EventEmitter {
                                             ? ""
                                             : `Server version: ${this.options.version}, Client version: ${clientRequest.data.version}`
                                     } ${
-                                        clientRequest.data.functionResolver !==
-                                        this.options.universalRPC.FunctionResolver.typeName()
+                                        !this.options.universalRPC.FunctionResolver.isCompatibleWith(
+                                            clientRequest.data.functionResolver
+                                        )
                                             ? ""
                                             : `Server functionResolver: ${this.options.universalRPC.FunctionResolver.typeName()}, Client functionResolver: ${
                                                   clientRequest.data
                                                       .functionResolver
                                               }`
                                     } ${
-                                        clientRequest.data.modelResolver !==
-                                        this.options.universalRPC.ModelResolver.typeName()
+                                        !this.options.universalRPC.ModelResolver.isCompatibleWith(
+                                            clientRequest.data.modelResolver
+                                        )
                                             ? ""
                                             : `Server modelResolver: ${this.options.universalRPC.ModelResolver.typeName()}, Client modelResolver: ${
                                                   clientRequest.data
                                                       .modelResolver
                                               }`
                                     } ${
-                                        clientRequest.data.CompressResolver !==
-                                        this.options.universalRPC.CompressResolver.typeName()
+                                        !this.options.universalRPC.CompressResolver.isCompatibleWith(
+                                            clientRequest.data.compressResolver
+                                        )
                                             ? ""
                                             : `Server compressResolver: ${this.options.universalRPC.CompressResolver.typeName()}, Client compressResolver: ${
                                                   clientRequest.data
-                                                      .CompressResolver
+                                                      .compressResolver
+                                              }`
+                                    } ${
+                                        !this.options.universalRPC.IdResolver.isCompatibleWith(
+                                            clientRequest.data.idResolver
+                                        )
+                                            ? ""
+                                            : `Server idResolver: ${this.options.universalRPC.IdResolver.typeName()}, Client idResolver: ${
+                                                  clientRequest.data.idResolver
                                               }`
                                     }`,
                                     400,
@@ -261,6 +286,7 @@ export class Server extends EventEmitter {
             modelResolver: this.options.universalRPC.ModelResolver.typeName(),
             compressResolver:
                 this.options.universalRPC.CompressResolver.typeName(),
+            idResolver: this.options.universalRPC.IdResolver.typeName(),
         };
         websocketInstance.send(
             JSON.stringify({ type: "init", data: initPayload })

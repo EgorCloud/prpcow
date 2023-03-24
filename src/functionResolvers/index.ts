@@ -2,14 +2,16 @@ import { DataObject } from "../utils/typeAssert.util";
 import { ModifiedWebSocket } from "../utils/websocketModifier.util";
 import { Logger, LoggerOptions } from "../utils/logger.util";
 import { ModelResolver } from "../modelResolvers";
-import { FunctionResolverFunction } from "../types";
+import { FunctionResolverFunction, IResolverStatic, Resolver } from "../types";
+import { IdResolver } from "../idResolvers";
 
-export abstract class FunctionResolver {
+export abstract class FunctionResolver extends Resolver {
     protected options: {
         session: ModifiedWebSocket;
         sendMessage: (message: any) => Promise<void>;
         deSerializeObject: ModelResolver["deserialize"];
         serializeObject: ModelResolver["serialize"];
+        uuid: IdResolver["gen"];
         logger: LoggerOptions | boolean;
     };
 
@@ -20,8 +22,10 @@ export abstract class FunctionResolver {
         sendMessage: (message: any) => Promise<void>;
         deSerializeObject: ModelResolver["deserialize"];
         serializeObject: ModelResolver["serialize"];
+        uuid: IdResolver["gen"];
         logger: LoggerOptions | boolean;
     }) {
+        super();
         this.options = options;
         if (typeof this.options.logger !== "boolean") {
             this.logger = new Logger({
@@ -49,14 +53,13 @@ export abstract class FunctionResolver {
     public abstract close(): void;
 }
 
-export interface IFunctionResolver {
+export interface IFunctionResolver extends IResolverStatic {
     new (options: {
         session: ModifiedWebSocket;
         sendMessage: (message: any) => Promise<void>;
         deSerializeObject: ModelResolver["deserialize"];
         serializeObject: ModelResolver["serialize"];
+        uuid: IdResolver["gen"];
         logger: LoggerOptions | boolean;
     }): FunctionResolver;
-
-    typeName(): string;
 }

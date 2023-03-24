@@ -217,7 +217,7 @@ export default class DefaultModelResolver extends ModelResolver {
         return returnValue;
     }
 
-    async deserialize(
+    deserialize(
         model: { type?: string; value?: any },
         getFunction: FunctionResolver["setTheirs"]
     ) {
@@ -254,7 +254,7 @@ export default class DefaultModelResolver extends ModelResolver {
         }
         for (let i = 0; i < Object.keys(model.value).length; i++) {
             const item = Object.keys(model.value)[i];
-            genericCreature[item] = await this.deserialize(
+            genericCreature[item] = this.deserialize(
                 model.value[item],
                 getFunction
             );

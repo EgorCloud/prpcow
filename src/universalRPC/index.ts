@@ -7,12 +7,14 @@ import { ModifiedWebSocket } from "../utils/websocketModifier.util";
 import typeAssert, { DataObject } from "../utils/typeAssert.util";
 import RuntimeError from "../utils/error.utils";
 import badRequestUtil from "../utils/badRequest.util";
+import { IdResolver, IIdResolver } from "../idResolvers";
 
 export default class UniversalRPC extends EventEmitter {
     private options: {
         FunctionResolver: IFunctionResolver;
         ModelResolver: IModelResolver;
         CompressResolver: ICompressResolver;
+        IdResolver: IIdResolver;
         logger: LoggerOptions | boolean;
     };
 
@@ -28,6 +30,8 @@ export default class UniversalRPC extends EventEmitter {
 
     private readonly compressResolver: CompressResolver;
 
+    private idResolver: IdResolver;
+
     private _theirsModel: any;
 
     private _oursModel: any;
@@ -40,6 +44,7 @@ export default class UniversalRPC extends EventEmitter {
             FunctionResolver: IFunctionResolver;
             ModelResolver: IModelResolver;
             CompressResolver: ICompressResolver;
+            IdResolver: IIdResolver;
             logger: LoggerOptions | boolean;
         }
     ) {
@@ -72,6 +77,14 @@ export default class UniversalRPC extends EventEmitter {
             },
         });
 
+        // create idResolver
+        this.idResolver = new this.options.IdResolver({
+            session: this.session,
+            logger: {
+                parentLogger: this.logger,
+            },
+        });
+
         // create functionResolver
         this.functionResolver = new this.options.FunctionResolver({
             session: this.session,
@@ -82,6 +95,7 @@ export default class UniversalRPC extends EventEmitter {
             serializeObject: this.modelResolver.serialize.bind(
                 this.modelResolver
             ),
+            uuid: this.idResolver.gen.bind(this.idResolver),
             logger: {
                 parentLogger: this.logger,
             },

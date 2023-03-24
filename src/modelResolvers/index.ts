@@ -1,8 +1,8 @@
 import { ModifiedWebSocket } from "../utils/websocketModifier.util";
 import { Logger, LoggerLevels, LoggerOptions } from "../utils/logger.util";
-import { FunctionResolverFunction } from "../types";
+import { FunctionResolverFunction, IResolverStatic, Resolver } from "../types";
 
-export abstract class ModelResolver {
+export abstract class ModelResolver extends Resolver {
     options: {
         session: ModifiedWebSocket;
         logger: LoggerOptions | boolean;
@@ -14,6 +14,7 @@ export abstract class ModelResolver {
         session: ModifiedWebSocket;
         logger: LoggerOptions | boolean;
     }) {
+        super();
         this.options = options;
         if (typeof this.options.logger !== "boolean") {
             this.logger = new Logger({
@@ -43,7 +44,7 @@ export abstract class ModelResolver {
     ): any;
 }
 
-export interface IModelResolver {
+export interface IModelResolver extends IResolverStatic {
     new (options: {
         session: ModifiedWebSocket;
         logger:
@@ -54,5 +55,4 @@ export interface IModelResolver {
               }
             | boolean;
     }): ModelResolver;
-    typeName(): string;
 }

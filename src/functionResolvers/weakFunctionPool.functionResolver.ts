@@ -1,10 +1,10 @@
 // eslint-disable-next-line max-classes-per-file
 import typeAssert, { DataObject } from "../utils/typeAssert.util";
-import { uuidv4 as uuid } from "../utils/uuid.util";
 import { FunctionResolver } from "./index";
 import { ModifiedWebSocket } from "../utils/websocketModifier.util";
 import { ModelResolver } from "../modelResolvers";
 import { LoggerOptions } from "../utils/logger.util";
+import { IdResolver } from "../idResolvers";
 
 const constants = {
     errors: {
@@ -74,6 +74,7 @@ export default class WeakFunctionPool extends FunctionResolver {
         sendMessage: (message: any) => any;
         deSerializeObject: ModelResolver["deserialize"];
         serializeObject: ModelResolver["serialize"];
+        uuid: IdResolver["gen"];
         logger: LoggerOptions | boolean;
     }) {
         super(options);
@@ -217,7 +218,7 @@ export default class WeakFunctionPool extends FunctionResolver {
     }
 
     setOurs(executor: Function) {
-        const ident = uuid();
+        const ident = this.options.uuid();
         this.oursFunctions[ident] = executor;
         return ident;
     }
@@ -233,7 +234,7 @@ export default class WeakFunctionPool extends FunctionResolver {
                         id,
                         params
                     );
-                    const requestId = uuid();
+                    const requestId = this.options.uuid();
                     this.theirsFunctionsWaitPool[requestId] = (
                         response: any
                     ) => {

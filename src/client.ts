@@ -15,6 +15,8 @@ import NoCompressionResolver from "./compressResolvers/noCompression.compression
 import { ICompressResolver } from "./compressResolvers";
 import { IFunctionResolver } from "./functionResolvers";
 import { IModelResolver } from "./modelResolvers";
+import { IIdResolver } from "./idResolvers";
+import UuidIdResolver from "./idResolvers/uuid.idResolver";
 
 interface WebsocketProto {
     prototype: WebSocket;
@@ -27,6 +29,7 @@ export type ClientOptions = {
         FunctionResolver?: IFunctionResolver;
         ModelResolver?: IModelResolver;
         CompressResolver?: ICompressResolver;
+        IdResolver?: IIdResolver;
     };
     logger?: LoggerOptions | boolean;
 };
@@ -37,6 +40,7 @@ type ClientInnerOptions = ClientOptions & {
         FunctionResolver: IFunctionResolver;
         ModelResolver: IModelResolver;
         CompressResolver: ICompressResolver;
+        IdResolver: IIdResolver;
     };
     version: string;
 };
@@ -69,6 +73,7 @@ export class Client {
                 FunctionResolver: WeakFunctionPool,
                 ModelResolver: DefaultResolver,
                 CompressResolver: NoCompressionResolver,
+                IdResolver: UuidIdResolver,
                 ...finalOptions.universalRPC,
             },
             version: packageJson.version,
@@ -122,13 +127,19 @@ export class Client {
                                         semver.eq(
                                             this.options.version,
                                             clientRequest.data.version
-                                        ) ||
-                                        clientRequest.data.functionResolver ===
-                                            this.options.universalRPC.FunctionResolver.typeName() ||
-                                        clientRequest.data.modelResolver ===
-                                            this.options.universalRPC.ModelResolver.typeName() ||
-                                        clientRequest.data.CompressResolver ===
-                                            this.options.universalRPC.CompressResolver.typeName()
+                                        ) &&
+                                        this.options.universalRPC.FunctionResolver.isCompatibleWith(
+                                            clientRequest.data.functionResolver
+                                        ) &&
+                                        this.options.universalRPC.ModelResolver.isCompatibleWith(
+                                            clientRequest.data.modelResolver
+                                        ) &&
+                                        this.options.universalRPC.CompressResolver.isCompatibleWith(
+                                            clientRequest.data.compressResolver
+                                        ) &&
+                                        this.options.universalRPC.IdResolver.isCompatibleWith(
+                                            clientRequest.data.idResolver
+                                        )
                                     )
                                 ) {
                                     this.logger.silly(
@@ -143,7 +154,10 @@ export class Client {
                                             clientRequest.data.modelResolver
                                         }`,
                                         `Client compressResolver: ${this.options.universalRPC.CompressResolver.typeName()}, Server compressResolver: ${
-                                            clientRequest.data.CompressResolver
+                                            clientRequest.data.compressResolver
+                                        }`,
+                                        `Client idResolver: ${this.options.universalRPC.IdResolver.typeName()}, Server idResolver: ${
+                                            clientRequest.data.idResolver
                                         }`
                                     );
                                     throw new RuntimeError(
@@ -155,30 +169,42 @@ export class Client {
                                                 ? ""
                                                 : `Client version: ${this.options.version}, Server version: ${clientRequest.data.version}`
                                         } ${
-                                            clientRequest.data
-                                                .functionResolver !==
-                                            this.options.universalRPC.FunctionResolver.typeName()
+                                            !this.options.universalRPC.FunctionResolver.isCompatibleWith(
+                                                clientRequest.data
+                                                    .functionResolver
+                                            )
                                                 ? ""
                                                 : `Client functionResolver: ${this.options.universalRPC.FunctionResolver.typeName()}, Server functionResolver: ${
                                                       clientRequest.data
                                                           .functionResolver
                                                   }`
                                         } ${
-                                            clientRequest.data.modelResolver !==
-                                            this.options.universalRPC.ModelResolver.typeName()
+                                            !this.options.universalRPC.ModelResolver.isCompatibleWith(
+                                                clientRequest.data.modelResolver
+                                            )
                                                 ? ""
                                                 : `Client modelResolver: ${this.options.universalRPC.ModelResolver.typeName()}, Server modelResolver: ${
                                                       clientRequest.data
                                                           .modelResolver
                                                   }`
                                         } ${
-                                            clientRequest.data
-                                                .CompressResolver !==
-                                            this.options.universalRPC.CompressResolver.typeName()
+                                            !this.options.universalRPC.CompressResolver.isCompatibleWith(
+                                                clientRequest.data
+                                                    .compressResolver
+                                            )
                                                 ? ""
                                                 : `Client compressResolver: ${this.options.universalRPC.CompressResolver.typeName()}, Server compressResolver: ${
                                                       clientRequest.data
-                                                          .CompressResolver
+                                                          .compressResolver
+                                                  }`
+                                        } ${
+                                            !this.options.universalRPC.IdResolver.isCompatibleWith(
+                                                clientRequest.data.idResolver
+                                            )
+                                                ? ""
+                                                : `Client idResolver: ${this.options.universalRPC.IdResolver.typeName()}, Server idResolver: ${
+                                                      clientRequest.data
+                                                          .idResolver
                                                   }`
                                         }`,
                                         400,
@@ -191,6 +217,7 @@ export class Client {
                                 );
 
                                 const initPayload = {
+                                    key: this.key,
                                     version: this.options.version,
                                     functionResolver:
                                         this.options.universalRPC.FunctionResolver.typeName(),
@@ -198,7 +225,8 @@ export class Client {
                                         this.options.universalRPC.ModelResolver.typeName(),
                                     compressResolver:
                                         this.options.universalRPC.CompressResolver.typeName(),
-                                    key: this.key,
+                                    idResolver:
+                                        this.options.universalRPC.IdResolver.typeName(),
                                 };
 
                                 this.logger.debug(

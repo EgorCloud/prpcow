@@ -1,8 +1,9 @@
 import WebSocket from "ws";
 import { BufferLike, ModifiedWebSocket } from "../utils/websocketModifier.util";
 import { Logger, LoggerOptions } from "../utils/logger.util";
+import { IResolverStatic, Resolver } from "../types";
 
-export abstract class CompressResolver {
+export abstract class CompressResolver extends Resolver {
     options: {
         session: ModifiedWebSocket;
         logger: LoggerOptions | boolean;
@@ -14,6 +15,7 @@ export abstract class CompressResolver {
         session: ModifiedWebSocket;
         logger: LoggerOptions | boolean;
     }) {
+        super();
         this.options = options;
         if (typeof this.options.logger !== "boolean") {
             this.logger = new Logger({
@@ -28,20 +30,15 @@ export abstract class CompressResolver {
             this.logger = new Logger();
         }
     }
-
-    static typeName(): string {
-        throw new Error("typeName() implementation is required");
-    }
     public abstract compress(messageEvent: object): Promise<BufferLike>;
     public abstract decompress(
         messageEvent: WebSocket.MessageEvent
     ): Promise<object>;
 }
 
-export interface ICompressResolver {
+export interface ICompressResolver extends IResolverStatic {
     new (options: {
         session: ModifiedWebSocket;
         logger: LoggerOptions | boolean;
     }): CompressResolver;
-    typeName(): string;
 }
