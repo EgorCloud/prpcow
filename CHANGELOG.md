@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0-alpha.8](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.7...v2.0.0-alpha.8) (2023-03-24)
+
+
+### Bug Fixes
+
+* Back to sync model resolver (Function Resolver) ([1a08605](https://github.com/yeskiy/prpcow/commit/1a08605bb56a3c6d46abc625e51be81ba3697092))
+
 ## [2.0.0-alpha.7](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.6...v2.0.0-alpha.7) (2023-03-23)
 
 
