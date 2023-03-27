@@ -122,13 +122,18 @@ export default class UniversalRPC extends EventEmitter {
     }
 
     private async send(data: any) {
-        if (this.session.readyState !== this.session.OPEN)
-            throw new Error("Session is not in opened state");
-        return this.session.send(
-            await this.compressResolver.compress.bind(this.compressResolver)(
-                data
-            )
-        );
+        try {
+            if (this.session.readyState !== this.session.OPEN)
+                throw new Error("Session is not in opened state");
+            return this.session.send(
+                await this.compressResolver.compress.bind(
+                    this.compressResolver
+                )(data)
+            );
+        } catch (e) {
+            console.trace(e);
+            return undefined;
+        }
     }
 
     private makeTheirsModel(newModel: any) {
@@ -284,7 +289,7 @@ export default class UniversalRPC extends EventEmitter {
         this.logger.silly("Request close promise added");
 
         if (!closeLength) {
-            this.send({
+            await this.send({
                 type: "closeRequest",
             });
             this.logger.silly("Request close sent");

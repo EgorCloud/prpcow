@@ -3,7 +3,6 @@ import NoCompressionResolver from "./compressResolvers/noCompression.compression
 import WeakFunctionPool from "./functionResolvers/weakFunctionPool.functionResolver";
 import DefaultModelResolver from "./modelResolvers/Default.modelResolver";
 import PureBrotliCompressionResolver from "./compressResolvers/pureBrotli.compressionResolver";
-import WasmBrotliCompressionResolver from "./compressResolvers/wasmBrotli.compressionResolver";
 import UuidIdResolver from "./idResolvers/uuid.idResolver";
 import PureUuidIdResolver from "./idResolvers/pureUuid.idResolver";
 // Utils
@@ -18,7 +17,6 @@ export * from "./idResolvers";
 export const compressResolvers = {
     NoCompressionResolver,
     PureBrotliCompressionResolver,
-    WasmBrotliCompressionResolver,
 };
 
 export const functionResolvers = {
