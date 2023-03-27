@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0-alpha.10](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.9...v2.0.0-alpha.10) (2023-03-27)
+
+
+### Bug Fixes
+
+* Add `idResolvers` support. Add export of Integrated Resolvers. Add `PureBrotliCompressionResolver` and `WasmBrotliCompressionResolver` (for different env support) ([9f5316e](https://github.com/yeskiy/prpcow/commit/9f5316ed5cb25110fcad4d5a38a63ae01b2751cc))
+
 ## [2.0.0-alpha.9](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.8...v2.0.0-alpha.9) (2023-03-24)
 
 
