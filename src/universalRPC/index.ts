@@ -131,8 +131,8 @@ export default class UniversalRPC extends EventEmitter {
                 )(data)
             );
         } catch (e) {
-            console.trace(e);
-            return undefined;
+            this.logger.trace(data, e);
+            throw e;
         }
     }
 
@@ -154,94 +154,103 @@ export default class UniversalRPC extends EventEmitter {
 
     async onMessage(requestData: DataObject) {
         this.logger.debug(`Message received`, requestData);
-        if (this.session.readyState !== this.session.OPEN)
-            throw new Error("Session is not in opened state");
-
-        try {
-            typeAssert(
-                requestData,
-                {
-                    upgradeModel: async () => {
-                        this.logger.silly(`Upgrade model received`);
-                        this.makeTheirsModel(
-                            Object.seal(
-                                this.modelResolver.deserialize(
-                                    requestData.data,
-                                    this.functionResolver.setTheirs.bind(
-                                        this.functionResolver
+        if (this.session.readyState !== this.session.OPEN) {
+            this.logger.warn(
+                `Accepted (${JSON.stringify(
+                    requestData
+                )}) when session is not opened. Skipping...`
+            );
+        } else {
+            try {
+                typeAssert(
+                    requestData,
+                    {
+                        upgradeModel: async () => {
+                            this.logger.silly(`Upgrade model received`);
+                            this.makeTheirsModel(
+                                Object.seal(
+                                    this.modelResolver.deserialize(
+                                        requestData.data,
+                                        this.functionResolver.setTheirs.bind(
+                                            this.functionResolver
+                                        )
                                     )
                                 )
-                            )
-                        );
-                        this.theirsModelChange();
-                    },
-                    functionResolver: () => {
-                        this.logger.silly(`"functionResolver" type received`);
-                        this.functionResolver.onMessage(requestData.data);
-                    },
-                    error: () => {
-                        const generatedError = new RuntimeError(
-                            requestData.error.message,
-                            requestData.error.status,
-                            requestData.error.name
-                        );
-                        this.logger.error(`Error received`, generatedError);
-                        this.error(generatedError);
-                    },
-                    closeRequest: async () => {
-                        this.logger.silly(`"closeRequest" type received`);
-                        /**
-                         * close Request event
-                         *
-                         * @event UniversalRPC#closeRequest
-                         */
-                        await Promise.all(
-                            this.listeners("closeRequest").map((item) => item())
-                        );
-                        await this.send({
-                            type: "closeRequestConfirm",
-                        });
-                    },
-                    closeRequestConfirm: async () => {
-                        this.logger.silly(
-                            `"requestCloseConfirm" type received`
-                        );
-                        if (this._closeRequestSides.length) {
+                            );
+                            this.theirsModelChange();
+                        },
+                        functionResolver: () => {
+                            this.logger.silly(
+                                `"functionResolver" type received`
+                            );
+                            this.functionResolver.onMessage(requestData.data);
+                        },
+                        error: () => {
+                            const generatedError = new RuntimeError(
+                                requestData.error.message,
+                                requestData.error.status,
+                                requestData.error.name
+                            );
+                            this.logger.error(`Error received`, generatedError);
+                            this.error(generatedError);
+                        },
+                        closeRequest: async () => {
+                            this.logger.silly(`"closeRequest" type received`);
+                            /**
+                             * close Request event
+                             *
+                             * @event UniversalRPC#closeRequest
+                             */
                             await Promise.all(
-                                this._closeRequestSides.map(
-                                    (resolve: Function) => resolve()
+                                this.listeners("closeRequest").map((item) =>
+                                    item()
                                 )
                             );
-                            this.logger.silly(`Close requests resolved`);
+                            await this.send({
+                                type: "closeRequestConfirm",
+                            });
+                        },
+                        closeRequestConfirm: async () => {
+                            this.logger.silly(
+                                `"requestCloseConfirm" type received`
+                            );
+                            if (this._closeRequestSides.length) {
+                                await Promise.all(
+                                    this._closeRequestSides.map(
+                                        (resolve: Function) => resolve()
+                                    )
+                                );
+                                this.logger.silly(`Close requests resolved`);
 
-                            await this.session.close();
-                            this.logger.silly(`Session closed`);
-                        } else {
-                            throw new Error("Close request not created");
-                        }
-                    },
-                    ready: async () => {
-                        this.logger.silly("Ready event received");
-                        this.logger.warn(
-                            `Ready event is already received on previous connector. Ignoring... 
+                                this.session.close();
+                                this.logger.silly(`Session closed`);
+                            } else {
+                                throw new Error("Close request not created");
+                            }
+                        },
+                        ready: async () => {
+                            this.logger.silly("Ready event received");
+                            this.logger.warn(
+                                `Ready event is already received on previous connector. Ignoring... 
                             This bug occurs mostly on React Native, but can be on other platforms too. 
                             If you are facing this bug and your platform is not React Native, please, create an issue on GitHub`
-                        );
+                            );
+                        },
                     },
-                },
-                () => {
-                    throw new Error("Unexpected Type");
-                }
-            );
-        } catch (e) {
-            this.logger.error(e);
-            await this.send(badRequestUtil(e));
-            await this.error(e);
-            this.logger.silly(`Event "error" emitted`);
-            this.session.close();
-            this.logger.silly(`Session closed`);
-            await this.close();
-            this.logger.silly(`Event "close" emitted`);
+                    () => {
+                        throw new Error("Unexpected Type");
+                    }
+                );
+            } catch (e) {
+                this.logger.error(e);
+                await this.send(badRequestUtil(e));
+                await this.error(e);
+                this.logger.silly(`Event "error" emitted`);
+                this.session.close();
+                this.logger.silly(`Session closed`);
+                await this.close();
+                this.logger.silly(`Event "close" emitted`);
+            }
         }
     }
 

@@ -3,11 +3,11 @@ import { IdResolver } from "./index";
 
 export default class UuidIdResolver extends IdResolver {
     public static typeName(): string {
-        return "Uuid";
+        return "UuidResolver";
     }
 
     public static isCompatibleWith(type: string): boolean {
-        return [this.typeName(), "PureUuid"].indexOf(type) !== -1;
+        return [this.typeName(), "PureUuidResolver"].indexOf(type) !== -1;
     }
 
     // eslint-disable-next-line class-methods-use-this

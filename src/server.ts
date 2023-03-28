@@ -20,6 +20,7 @@ import { IModelResolver } from "./modelResolvers";
 import { ICompressResolver } from "./compressResolvers";
 import { IIdResolver } from "./idResolvers";
 import UuidIdResolver from "./idResolvers/uuid.idResolver";
+import satisfies from "./utils/version.util";
 
 export type ServerOptions = {
     ws: WebSocket.ServerOptions;
@@ -123,7 +124,7 @@ export class Server extends EventEmitter {
 
                             if (
                                 !(
-                                    semver.eq(
+                                    satisfies(
                                         this.options.version,
                                         clientRequest.data.version
                                     ) &&
@@ -310,7 +311,7 @@ export class Server extends EventEmitter {
         this.logger.silly(`New session event emitted`);
     }
 
-    public async close(closeWebsocketServer = true) {
+    public async close(closeWebsocketServer = true): Promise<void> {
         await Promise.all(
             Object.values(this.activeSessions).map(async (universalRPC) =>
                 universalRPC.closeRequest()
@@ -318,8 +319,18 @@ export class Server extends EventEmitter {
         );
 
         if (closeWebsocketServer) {
-            this.websocket.close();
-            this.logger.debug("Closed websocket server");
+            let PromiseResolver: { resolve: Function; reject: Function } = null;
+            const returnPromise = new Promise<void>((resolve, reject) => {
+                PromiseResolver = { resolve, reject };
+            });
+            this.websocket.close((err) => {
+                this.logger.debug("Closed websocket server");
+                if (err) PromiseResolver.reject(err);
+                else PromiseResolver.resolve();
+            });
+            this.logger.silly("Closing websocket server");
+            return returnPromise;
         }
+        return Promise.resolve();
     }
 }

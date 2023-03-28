@@ -5,14 +5,15 @@ const { Client, Server, consoleLogTransport } = require("prpcow");
 const WebSocket = require("ws");
 
 describe("Base tests", () => {
-    it("should create server", () => {
+    it("should create server", async () => {
         const server = new Server({
             ws: {
                 port: 9090,
             },
-            logger: { level: "silly" },
+            logger: { level: "silly", callback: consoleLogTransport },
         });
         expect(server).toBeDefined();
+        await server.close();
     });
     it("should create server and client can connect", async () => {
         const server = new Server({
@@ -46,6 +47,7 @@ describe("Base tests", () => {
             );
         });
         expect(client).toBeDefined();
+        await server.close();
     });
     it("should create server and client can connect and send message", async () => {
         const server = new Server({
@@ -96,8 +98,9 @@ describe("Base tests", () => {
         expect(client).toBeDefined();
         const result = await client.theirsModel.some.ping();
         expect(result).toEqual("pong");
+        await server.close();
     });
-    it("should create server and client can connect and use stream", async () => {
+    it("should create server and client can connect and use stream from server", async () => {
         const server = new Server({
             ws: {
                 port: 9093,
@@ -169,8 +172,83 @@ describe("Base tests", () => {
         });
 
         expect(result).toEqual("Hello World");
+        await server.close();
     });
+    it("should send client stream to the server", async () => {
+        const jsonData = JSON.stringify({ success: true });
+        const server = new Server({
+            ws: {
+                port: 9097,
+            },
+            logger: {
+                level: "silly",
+                callback: consoleLogTransport,
+            },
+        });
+        expect(server).toBeDefined();
+        server.on("newSession", (session) => {
+            session.setOursModel({
+                sendStream: async (clientStream) => {
+                    console.log("[sendStream()]: Received stream");
+                    expect(clientStream).toBeDefined();
+                    const buffer = [];
 
+                    clientStream.on("data", (data) => {
+                        buffer.push(data);
+                    });
+                    await new Promise((resolve) => {
+                        clientStream.on("end", () => {
+                            resolve();
+                        });
+                    });
+
+                    const data = Buffer.concat(buffer).toString("utf-8");
+                    expect(data).toBe(jsonData);
+                    return "ok";
+                },
+            });
+        });
+        const client = await new Promise((resolve, reject) => {
+            // eslint-disable-next-line no-new
+            new Client(
+                WebSocket,
+                "ws://localhost:9097",
+                [],
+                {
+                    logger: {
+                        level: "silly",
+                        callback: consoleLogTransport,
+                    },
+                },
+                (err, session) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        session.on("theirsModelChange", async (model) => {
+                            console.log(
+                                "client session theirsModelChange",
+                                model
+                            );
+                            resolve(session);
+                        });
+                    }
+                }
+            );
+        });
+        expect(client).toBeDefined();
+        const passThrough = new stream.PassThrough();
+        const chunks = 5;
+        const chunkSize = Math.ceil(jsonData.length / chunks);
+        const result = client.theirsModel.sendStream(passThrough);
+        for (let i = 0; i < chunks; i++) {
+            passThrough.write(
+                jsonData.slice(i * chunkSize, (i + 1) * chunkSize)
+            );
+        }
+        passThrough.end();
+        expect(await result).toBe("ok");
+        await server.close();
+    });
     it("should close connection by .close on server", async () => {
         const server = new Server({
             ws: {
@@ -326,6 +404,7 @@ describe("Base tests", () => {
     //             server.activeSessions[sessionId].functionResolver.oursFunctions
     //         ).length
     //     ).toEqual(2);
+    //     await server.close();
     // });
 
     it("should create server and client can connect and got an error when connection is lost", async () => {
@@ -382,6 +461,7 @@ describe("Base tests", () => {
         try {
             await client.theirsModel.some.ping();
         } catch (e) {
+            console.log("First error Got!!");
             isGotError = true;
         }
         expect(isGotError).toBeTruthy();
@@ -390,8 +470,10 @@ describe("Base tests", () => {
         try {
             await client.theirsModel.some.ping();
         } catch (e) {
+            console.log("Second error Got!!");
             isGotSecondError = true;
         }
         expect(isGotSecondError).toBeTruthy();
+        // await server.close();
     });
 });

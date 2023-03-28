@@ -17,6 +17,7 @@ import { IFunctionResolver } from "./functionResolvers";
 import { IModelResolver } from "./modelResolvers";
 import { IIdResolver } from "./idResolvers";
 import UuidIdResolver from "./idResolvers/uuid.idResolver";
+import satisfies from "./utils/version.util";
 
 interface WebsocketProto {
     prototype: WebSocket;
@@ -57,6 +58,8 @@ export class Client {
     public key: string;
 
     private options: ClientInnerOptions;
+
+    private universalSession: UniversalRPC;
 
     constructor(
         WebsocketImplementation: WebsocketProto,
@@ -124,7 +127,7 @@ export class Client {
 
                                 if (
                                     !(
-                                        semver.eq(
+                                        satisfies(
                                             this.options.version,
                                             clientRequest.data.version
                                         ) &&
@@ -252,7 +255,7 @@ export class Client {
                                 // @ts-ignore
                                 this.websocket.sessionId = this.key;
 
-                                const universalSession = new UniversalRPC(
+                                this.universalSession = new UniversalRPC(
                                     this.websocket,
                                     {
                                         logger: {
@@ -274,8 +277,11 @@ export class Client {
                                     `initMessageOperator removed`
                                 );
 
-                                this.options.callback(null, universalSession);
-                                resolve(universalSession);
+                                this.options.callback(
+                                    null,
+                                    this.universalSession
+                                );
+                                resolve(this.universalSession);
 
                                 this.logger.silly(
                                     "callback (and Promise) resolved"

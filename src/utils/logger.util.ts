@@ -70,7 +70,7 @@ export class Logger {
 
     public callback: (info: LoggerMessage) => void | Promise<void>;
 
-    private level: LoggerLevels;
+    public level: LoggerLevels;
 
     static child(options: LoggerChildOptions): Logger {
         return new Logger(options);
@@ -84,7 +84,10 @@ export class Logger {
                 ...this.options.parentLogger.nameLevel,
                 this.name,
             ];
-            this.callback = this.options.parentLogger.callback;
+            this.level = this.options.parentLogger.level;
+            this.callback = this.options.parentLogger.callback.bind(
+                this.options.parentLogger
+            );
         } else {
             this.level = this.options.level ?? "info";
             this.callback = this.options.callback ?? (() => {});
@@ -95,7 +98,7 @@ export class Logger {
 
     private execute(level: LoggerLevels, ...message: any[]) {
         if (
-            LoggerLevelsArray.indexOf(level) >=
+            LoggerLevelsArray.indexOf(level) <=
             LoggerLevelsArray.indexOf(this.level)
         ) {
             this.callback({
@@ -137,6 +140,10 @@ export class Logger {
     }
 
     public silly(...message: any[]) {
+        this.execute("silly", ...message);
+    }
+
+    public trace(...message: any[]) {
         this.execute("silly", ...message);
     }
 }
