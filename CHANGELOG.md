@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0-alpha.11](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.10...v2.0.0-alpha.11) (2023-03-28)
+
+
+### Bug Fixes
+
+* Fully remove `brotli` from CompressionResolvers ([5bbdaff](https://github.com/yeskiy/prpcow/commit/5bbdaffa81a95ad1d27856a479ff6b17f2af8c73))
+
 ## [2.0.0-alpha.10](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.9...v2.0.0-alpha.10) (2023-03-27)
 
 
