@@ -169,7 +169,7 @@ export default class UniversalRPC extends EventEmitter {
                             this.logger.silly(`Upgrade model received`);
                             this.makeTheirsModel(
                                 Object.seal(
-                                    this.modelResolver.deserialize(
+                                    await this.modelResolver.deserialize(
                                         requestData.data,
                                         this.functionResolver.setTheirs.bind(
                                             this.functionResolver
@@ -354,7 +354,7 @@ export default class UniversalRPC extends EventEmitter {
 
     private async sendOursModel() {
         await this.sendUpgradeModel(
-            this.modelResolver.serialize(
+            await this.modelResolver.serialize(
                 this.oursModel,
                 this.functionResolver.setOurs.bind(this.functionResolver)
             )

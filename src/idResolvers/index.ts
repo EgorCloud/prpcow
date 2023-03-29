@@ -25,7 +25,7 @@ export abstract class IdResolver extends Resolver {
         }
     }
 
-    public abstract gen(...params: any[]): string;
+    public abstract gen(...params: any[]): Promise<string>;
     public abstract close(): void;
 }
 

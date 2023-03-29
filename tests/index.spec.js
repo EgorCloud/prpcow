@@ -1,7 +1,12 @@
 /* eslint-disable no-new */
 const { expect, it, describe } = require("@jest/globals");
 const stream = require("stream");
-const { Client, Server, consoleLogTransport } = require("prpcow");
+const {
+    Client,
+    Server,
+    consoleLogTransport,
+    modelResolvers: { DefaultModelResolver },
+} = require("prpcow");
 const WebSocket = require("ws");
 
 describe("Base tests", () => {
@@ -192,16 +197,14 @@ describe("Base tests", () => {
                     console.log("[sendStream()]: Received stream");
                     expect(clientStream).toBeDefined();
                     const buffer = [];
-
-                    clientStream.on("data", (data) => {
-                        buffer.push(data);
+                    clientStream.on("data", (chunk) => {
+                        buffer.push(chunk);
                     });
                     await new Promise((resolve) => {
                         clientStream.on("end", () => {
                             resolve();
                         });
                     });
-
                     const data = Buffer.concat(buffer).toString("utf-8");
                     expect(data).toBe(jsonData);
                     return "ok";
@@ -240,12 +243,17 @@ describe("Base tests", () => {
         const chunks = 5;
         const chunkSize = Math.ceil(jsonData.length / chunks);
         const result = client.theirsModel.sendStream(passThrough);
-        for (let i = 0; i < chunks; i++) {
-            passThrough.write(
-                jsonData.slice(i * chunkSize, (i + 1) * chunkSize)
-            );
-        }
-        passThrough.end();
+        setTimeout(() => {
+            for (let i = 0; i < chunks; i++) {
+                passThrough.write(
+                    jsonData.slice(i * chunkSize, (i + 1) * chunkSize)
+                );
+            }
+            setTimeout(() => {
+                passThrough.end();
+            }, 100);
+        }, 100);
+
         expect(await result).toBe("ok");
         await server.close();
     });
@@ -406,7 +414,6 @@ describe("Base tests", () => {
     //     ).toEqual(2);
     //     await server.close();
     // });
-
     it("should create server and client can connect and got an error when connection is lost", async () => {
         const server = new Server({
             ws: {
@@ -475,5 +482,57 @@ describe("Base tests", () => {
         }
         expect(isGotSecondError).toBeTruthy();
         // await server.close();
+    });
+    it("should create server and client can connect and send JSONLike message", async () => {
+        const server = new Server({
+            ws: {
+                port: 9098,
+            },
+            logger: {
+                level: "silly",
+                callback: consoleLogTransport,
+            },
+        });
+        server.on("newSession", (session) => {
+            console.log("server session connected");
+            session.setOursModel({
+                name: "server",
+                some: {
+                    ping: async () =>
+                        DefaultModelResolver.JSONLike({ coolData: "pong" }),
+                },
+            });
+        });
+        expect(server).toBeDefined();
+        const client = await new Promise((resolve, reject) => {
+            new Client(
+                WebSocket,
+                "ws://localhost:9098",
+                [],
+                {
+                    logger: {
+                        level: "silly",
+                        callback: consoleLogTransport,
+                    },
+                },
+                (err, session) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        session.on("theirsModelChange", async (model) => {
+                            console.log(
+                                "client session theirsModelChange",
+                                model
+                            );
+                            resolve(session);
+                        });
+                    }
+                }
+            );
+        });
+        expect(client).toBeDefined();
+        const result = await client.theirsModel.some.ping();
+        expect(result.coolData).toEqual("pong");
+        await server.close();
     });
 });

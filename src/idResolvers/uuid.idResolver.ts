@@ -11,7 +11,7 @@ export default class UuidIdResolver extends IdResolver {
     }
 
     // eslint-disable-next-line class-methods-use-this
-    public gen() {
+    public async gen() {
         return uuidv4();
     }
 

@@ -8,7 +8,7 @@ export abstract class ModelResolver extends Resolver {
         logger: LoggerOptions | boolean;
     };
 
-    private logger: Logger;
+    protected logger: Logger;
 
     constructor(options: {
         session: ModifiedWebSocket;
@@ -30,18 +30,15 @@ export abstract class ModelResolver extends Resolver {
         }
     }
 
-    static typeName(): string {
-        throw new Error("typeName() implementation is required");
-    }
     public abstract serialize(
         model: any,
-        getFunctionId: (executor: Function) => string
-    ): object;
+        getFunctionId: (executor: Function) => Promise<string>
+    ): Promise<object> | object;
 
     public abstract deserialize(
         model: any,
-        getFunctionWrapper: (id: string) => FunctionResolverFunction
-    ): any;
+        getFunctionWrapper: (id: string) => Promise<FunctionResolverFunction>
+    ): Promise<any> | any;
 }
 
 export interface IModelResolver extends IResolverStatic {

@@ -14,7 +14,7 @@ export default class PureUuidIdResolver extends IdResolver {
     close(): void {}
 
     // eslint-disable-next-line class-methods-use-this
-    public gen(): string {
+    public async gen() {
         return new UUID(4).format();
     }
 }

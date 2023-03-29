@@ -1,8 +1,22 @@
+// eslint-disable-next-line max-classes-per-file
 import { Buffer } from "buffer";
 import { ModelResolver } from "./index";
 import { FunctionResolver } from "../functionResolvers";
 import { ModifiedWebSocket } from "../utils/websocketModifier.util";
 import { LoggerOptions } from "../utils/logger.util";
+
+// eslint-disable-next-line @typescript-eslint/naming-convention,camelcase
+export class DefaultModelResolver__JSONLike {
+    private readonly data: object;
+
+    constructor(data: object) {
+        this.data = data;
+    }
+
+    toJSON() {
+        return JSON.stringify(this.data);
+    }
+}
 
 export default class DefaultModelResolver extends ModelResolver {
     private primitiveValues: string[];
@@ -22,11 +36,11 @@ export default class DefaultModelResolver extends ModelResolver {
             deserialize?: (
                 model: any,
                 getFunction: FunctionResolver["setTheirs"]
-            ) => any;
+            ) => Promise<any>;
             serialize?: (
                 model: any,
                 getFunctionId: FunctionResolver["setOurs"]
-            ) => string;
+            ) => Promise<string>;
         };
     };
 
@@ -35,7 +49,7 @@ export default class DefaultModelResolver extends ModelResolver {
             serialize?: (
                 model: any,
                 getFunctionId: FunctionResolver["setOurs"]
-            ) => any | void;
+            ) => Promise<any | void>;
         };
     };
 
@@ -106,19 +120,25 @@ export default class DefaultModelResolver extends ModelResolver {
         };
         this.overloadedTypes = {
             Date: {
-                serialize: (model) => model.toISOString(),
-                deserialize: (model) => new Date(model.value),
+                serialize: async (model) => model.toISOString(),
+                deserialize: async (model) => new Date(model.value),
             },
             Function: {
-                deserialize: (model, getFunction) => getFunction(model.id),
+                deserialize: async (model, getFunction) =>
+                    getFunction(model.id),
             },
             AsyncFunction: {
-                deserialize: (model, getFunction) => getFunction(model.id),
+                deserialize: async (model, getFunction) =>
+                    getFunction(model.id),
+            },
+            DefaultModelResolver__JSONLike: {
+                serialize: async (model) => model.toJSON(),
+                deserialize: async (model) => JSON.parse(model.value),
             },
         };
         this.typesModifier = {
             PassThrough: {
-                serialize: (model) => {
+                serialize: async (model) => {
                     if (!model.__on) {
                         // eslint-disable-next-line no-param-reassign
                         model.__on = model.on;
@@ -128,19 +148,22 @@ export default class DefaultModelResolver extends ModelResolver {
                 },
             },
             Function: {
-                serialize: (model, getFunctionId) => ({
-                    id: getFunctionId(model),
+                serialize: async (model, getFunctionId) => ({
+                    id: await getFunctionId(model),
                 }),
             },
             AsyncFunction: {
-                serialize: (model, getFunctionId) => ({
-                    id: getFunctionId(model),
+                serialize: async (model, getFunctionId) => ({
+                    id: await getFunctionId(model),
                 }),
             },
         };
     }
 
-    serialize(affectedModel: any, getFunction: FunctionResolver["setOurs"]) {
+    async serialize(
+        affectedModel: any,
+        getFunction: FunctionResolver["setOurs"]
+    ) {
         const model = affectedModel;
         const returnValue: {
             type?: string;
@@ -155,14 +178,14 @@ export default class DefaultModelResolver extends ModelResolver {
             }
 
             if (this.overloadedTypes[returnValue.type]?.serialize) {
-                returnValue.value = this.overloadedTypes[
+                returnValue.value = await this.overloadedTypes[
                     returnValue.type
                 ].serialize(model, getFunction);
             } else if (this.primitiveValues.indexOf(returnValue.type) === -1) {
                 returnValue.value = {};
 
                 if (this.typesModifier[returnValue.type]) {
-                    const result = this.typesModifier[
+                    const result = await this.typesModifier[
                         returnValue.type
                     ].serialize?.(model, getFunction);
                     if (result && typeof result === "object") {
@@ -179,7 +202,7 @@ export default class DefaultModelResolver extends ModelResolver {
                 ) {
                     const item = Object.getOwnPropertyNames(model)[i];
                     item !== "prototype" &&
-                        (returnValue.value[item] = this.serialize(
+                        (returnValue.value[item] = await this.serialize(
                             model[item],
                             getFunction
                         ));
@@ -201,7 +224,7 @@ export default class DefaultModelResolver extends ModelResolver {
                             Object.getPrototypeOf(model)
                         )[i];
                         item !== "constructor" &&
-                            (returnValue.value[item] = this.serialize(
+                            (returnValue.value[item] = await this.serialize(
                                 model[item],
                                 getFunction
                             ));
@@ -217,7 +240,7 @@ export default class DefaultModelResolver extends ModelResolver {
         return returnValue;
     }
 
-    deserialize(
+    async deserialize(
         model: { type?: string; value?: any },
         getFunction: FunctionResolver["setTheirs"]
     ) {
@@ -254,11 +277,16 @@ export default class DefaultModelResolver extends ModelResolver {
         }
         for (let i = 0; i < Object.keys(model.value).length; i++) {
             const item = Object.keys(model.value)[i];
-            genericCreature[item] = this.deserialize(
+            genericCreature[item] = await this.deserialize(
                 model.value[item],
                 getFunction
             );
         }
         return genericCreature;
+    }
+
+    // eslint-disable-next-line camelcase
+    static JSONLike(data: object): DefaultModelResolver__JSONLike {
+        return new DefaultModelResolver__JSONLike(data);
     }
 }

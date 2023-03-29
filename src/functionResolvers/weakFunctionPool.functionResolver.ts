@@ -3,7 +3,7 @@ import typeAssert, { DataObject } from "../utils/typeAssert.util";
 import { FunctionResolver } from "./index";
 import { ModifiedWebSocket } from "../utils/websocketModifier.util";
 import { ModelResolver } from "../modelResolvers";
-import { LoggerOptions } from "../utils/logger.util";
+import { Logger, LoggerOptions } from "../utils/logger.util";
 import { IdResolver } from "../idResolvers";
 
 const constants = {
@@ -162,15 +162,14 @@ export default class WeakFunctionPool extends FunctionResolver {
                                 message.requestId,
                                 {
                                     id: message.data.id,
-                                    payload: this.options.serializeObject(
+                                    payload: await this.options.serializeObject(
                                         await this.executeFunctionCatcher(
-                                            this.getOurs(message.data.id),
-                                            ...this.options.deSerializeObject(
+                                            await this.getOurs(message.data.id),
+                                            ...(await this.options.deSerializeObject(
                                                 message.data.payload,
                                                 this.setTheirs.bind(this)
-                                            )
+                                            ))
                                         ),
-
                                         this.setOurs.bind(this)
                                     ),
                                 }
@@ -188,7 +187,7 @@ export default class WeakFunctionPool extends FunctionResolver {
                         `Got Response on execute (${message.requestId})`
                     );
                     this.theirsFunctionsWaitPool[message.requestId](
-                        this.options.deSerializeObject(
+                        await this.options.deSerializeObject(
                             message.data.payload,
                             this.setTheirs.bind(this)
                         )
@@ -217,29 +216,32 @@ export default class WeakFunctionPool extends FunctionResolver {
         );
     }
 
-    setOurs(executor: Function) {
-        const ident = this.options.uuid();
+    async setOurs(executor: Function) {
+        const ident = await this.options.uuid();
         this.oursFunctions[ident] = executor;
         return ident;
     }
 
-    setTheirs(id: string) {
+    async setTheirs(id: string) {
         this.logger.silly("setTheirs", id);
         this.theirsFunctions.set(
             id,
             (...params: any[]) =>
                 new Promise(async (resolve, reject) => {
                     this.logger.debug(
-                        "Theirs function wrapper called",
-                        id,
+                        `Theirs function wrapper called (${id}) with params:`,
                         params
                     );
-                    const requestId = this.options.uuid();
+                    const requestId = await this.options.uuid();
+                    const requestLogger = Logger.child({
+                        name: requestId.slice(-4),
+                        parentLogger: this.logger,
+                    });
                     this.theirsFunctionsWaitPool[requestId] = (
                         response: any
                     ) => {
-                        this.logger.silly(
-                            `Got Response by function response Handler (${id})`
+                        requestLogger.silly(
+                            `Got Response by function response Handler`
                         );
                         if (
                             typeof response === "object" &&
@@ -253,33 +255,29 @@ export default class WeakFunctionPool extends FunctionResolver {
                             resolve(response);
                         }
                     };
-                    this.logger.silly(
-                        `Theirs function wrapper added in que (${requestId})`
-                    );
+                    requestLogger.silly(`Theirs function wrapper added in que`);
                     try {
                         await this.options.sendMessage(
                             this.messageBuilder("execute", requestId, {
                                 id,
-                                payload: this.options.serializeObject(
+                                payload: await this.options.serializeObject(
                                     params,
                                     this.setOurs.bind(this)
                                 ),
                             })
                         );
-                        this.logger.silly(
-                            `Theirs function wrapper request sent (${requestId})`
+                        requestLogger.silly(
+                            `Theirs function wrapper request sent`
                         );
                     } catch (e) {
-                        this.logger.silly(
-                            `Theirs function wrapper request failed (${requestId})`
+                        requestLogger.silly(
+                            `Theirs function wrapper request failed`
                         );
                         Reflect.deleteProperty(
                             this.theirsFunctionsWaitPool,
                             requestId
                         );
-                        this.logger.silly(
-                            `Remove from wait pool (${requestId})`
-                        );
+                        requestLogger.silly(`Remove from wait pool`);
                         reject(e);
                     }
                 })
@@ -306,11 +304,11 @@ export default class WeakFunctionPool extends FunctionResolver {
         }
     }
 
-    getOurs(id: string) {
+    async getOurs(id: string) {
         return this.oursFunctions[id] || null;
     }
 
-    getTheirs(id: string) {
+    async getTheirs(id: string) {
         return this.theirsFunctions.has(id)
             ? this.theirsFunctions.get(id)
             : null;
