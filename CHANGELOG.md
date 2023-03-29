@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0-alpha.12](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.11...v2.0.0-alpha.12) (2023-03-29)
+
+
+### Bug Fixes
+
+* Back to Async (here we go again). Added `JSONLike` optimization module ([04709cc](https://github.com/yeskiy/prpcow/commit/04709cc5bcdc20df0fb1784e980fbfbe1fe1f6db))
+
 ## [2.0.0-alpha.11](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.10...v2.0.0-alpha.11) (2023-03-28)
 
 
