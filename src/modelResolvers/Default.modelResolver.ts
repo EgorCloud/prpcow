@@ -267,8 +267,8 @@ export default class DefaultModelResolver extends ModelResolver {
             genericCreature = new this.genericTypes[model.type]();
         } else {
             const className = model.type
-                .replace(/(^[0-9])/g, "_")
-                .replace(/([^A-Za-z0-9_])/g, "_");
+                .replace(/(^\d)/g, "_")
+                .replace(/(\W)/g, "_");
             // eslint-disable-next-line no-eval
             genericCreature = eval(`()=>{
                    class ${className} {}

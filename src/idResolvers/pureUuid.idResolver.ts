@@ -11,10 +11,11 @@ export default class PureUuidIdResolver extends IdResolver {
     }
 
     // eslint-disable-next-line class-methods-use-this
-    close(): void {}
-
-    // eslint-disable-next-line class-methods-use-this
     public async gen() {
         return new UUID(4).format();
+    }
+
+    close(): void {
+        return Object.getPrototypeOf(this).constructor.typeName();
     }
 }

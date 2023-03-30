@@ -21,7 +21,7 @@ import satisfies from "./utils/version.util";
 
 interface WebsocketProto {
     prototype: WebSocket;
-    new (address: string | URL, protocols: String | String[]): WebSocket;
+    new (address: string | URL, protocols: string | string[]): WebSocket;
 }
 
 export type ClientOptions = {
@@ -64,7 +64,7 @@ export class Client {
     constructor(
         WebsocketImplementation: WebsocketProto,
         address: string | URL,
-        protocols: String | String[],
+        protocols: string | string[],
         options: ClientOptions,
         callback: Function = () => {}
     ) {

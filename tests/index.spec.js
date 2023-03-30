@@ -481,7 +481,6 @@ describe("Base tests", () => {
             isGotSecondError = true;
         }
         expect(isGotSecondError).toBeTruthy();
-        // await server.close();
     });
     it("should create server and client can connect and send JSONLike message", async () => {
         const server = new Server({
