@@ -4,7 +4,7 @@ import websocketModifier, {
     ModifiedWebSocket,
 } from "./utils/websocketModifier.util";
 import WeakFunctionPool from "./functionResolvers/weakFunctionPool.functionResolver";
-import DefaultResolver from "./modelResolvers/Default.modelResolver";
+import DefaultResolver from "./modelResolvers/default.modelResolver";
 import packageJson from "../package.json";
 import typeAssert from "./utils/typeAssert.util";
 import RuntimeError from "./utils/error.utils";

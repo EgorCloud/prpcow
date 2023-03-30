@@ -4,7 +4,7 @@ import semver from "semver";
 import * as http from "http";
 import WebSocket from "ws";
 import WeakFunctionPool from "./functionResolvers/weakFunctionPool.functionResolver";
-import DefaultResolver from "./modelResolvers/Default.modelResolver";
+import DefaultResolver from "./modelResolvers/default.modelResolver";
 import packageJson from "../package.json";
 import websocketModifier, {
     ModifiedWebSocket,
@@ -21,9 +21,15 @@ import { ICompressResolver } from "./compressResolvers";
 import { IIdResolver } from "./idResolvers";
 import UuidIdResolver from "./idResolvers/uuid.idResolver";
 import satisfies from "./utils/version.util";
+import {
+    ISessionStoreResolver,
+    SessionStoreResolver,
+} from "./sessionStoreResolver";
+import DefaultSessionStoreResolver from "./sessionStoreResolver/default.sessionStoreResolver";
 
 export type ServerOptions = {
     ws: WebSocket.ServerOptions;
+    SessionStoreResolver?: ISessionStoreResolver;
     universalRPC?: {
         FunctionResolver?: IFunctionResolver;
         ModelResolver?: IModelResolver;
@@ -34,6 +40,7 @@ export type ServerOptions = {
 };
 
 type ServerInnerOptions = ServerOptions & {
+    SessionStoreResolver: ISessionStoreResolver;
     universalRPC: {
         FunctionResolver: IFunctionResolver;
         ModelResolver: IModelResolver;
@@ -48,14 +55,15 @@ export class Server extends EventEmitter {
 
     private readonly logger: Logger;
 
-    private readonly activeSessions: { [x: string]: UniversalRPC };
-
     private options: ServerInnerOptions;
+
+    private sessionStoreResolver: SessionStoreResolver;
 
     constructor(options: ServerOptions) {
         super();
         this.options = {
             ws: {},
+            SessionStoreResolver: DefaultSessionStoreResolver,
             ...options,
             universalRPC: {
                 FunctionResolver: WeakFunctionPool,
@@ -66,7 +74,6 @@ export class Server extends EventEmitter {
             },
             version: packageJson.version,
         };
-        this.activeSessions = {};
 
         if (typeof this.options.logger !== "boolean") {
             this.logger = new Logger({
@@ -76,6 +83,12 @@ export class Server extends EventEmitter {
         } else {
             this.logger = new Logger();
         }
+
+        this.sessionStoreResolver = new this.options.SessionStoreResolver({
+            logger: {
+                parentLogger: this.logger,
+            },
+        });
 
         this.websocket = new WebSocket.Server(options.ws);
 
@@ -295,14 +308,17 @@ export class Server extends EventEmitter {
         requestLogger.debug(`Sent init status with message:`, initPayload);
     }
 
-    private newSession(universalRPC: UniversalRPC) {
-        universalRPC.addListener("close", () => {
+    private async newSession(universalRPC: UniversalRPC) {
+        universalRPC.addListener("close", async () => {
             this.logger.debug(
-                `UniversalRPC session closed (${universalRPC.sessionId}), removing session from active sessions`
+                `UniversalRPC session closed (${universalRPC.sessionId}), removing session from sessions store`
             );
-            Reflect.deleteProperty(this.activeSessions, universalRPC.sessionId);
+            await this.sessionStoreResolver.delete(universalRPC.sessionId);
         });
-        this.activeSessions[universalRPC.sessionId] = universalRPC;
+        await this.sessionStoreResolver.set(
+            universalRPC.sessionId,
+            universalRPC
+        );
         this.logger.silly(
             `New UniversalRPC session set (${universalRPC.sessionId})`
         );
@@ -313,8 +329,8 @@ export class Server extends EventEmitter {
 
     public async close(closeWebsocketServer = true): Promise<void> {
         await Promise.all(
-            Object.values(this.activeSessions).map(async (universalRPC) =>
-                universalRPC.closeRequest()
+            Object.values(await this.sessionStoreResolver.getAll()).map(
+                async (universalRPC) => universalRPC.closeRequest()
             )
         );
 

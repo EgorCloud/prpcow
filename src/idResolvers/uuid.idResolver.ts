@@ -16,5 +16,7 @@ export default class UuidIdResolver extends IdResolver {
     }
 
     // eslint-disable-next-line class-methods-use-this
-    close(): void {}
+    close(): void {
+        return Object.getPrototypeOf(this).constructor.typeName();
+    }
 }
