@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0-alpha.13](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.12...v2.0.0-alpha.13) (2023-03-30)
+
+
+### Bug Fixes
+
+* Add `SessionStoreResolver` for server. ([585c1d7](https://github.com/yeskiy/prpcow/commit/585c1d7e1f3a674c6a2dc6b168b1c40d1b6062e5))
+* Resolver code smells ([a0d704d](https://github.com/yeskiy/prpcow/commit/a0d704d51c55189e6f79808b5b9bc3b42ca6ab6b))
+
 ## [2.0.0-alpha.12](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.11...v2.0.0-alpha.12) (2023-03-29)
 
 
