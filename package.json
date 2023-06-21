@@ -31,7 +31,7 @@
         "buffer": "^6.0.3",
         "events": "^3.3.0",
         "pure-uuid": "^1.6.3",
-        "semver": "^7.3.8",
+        "semver": "^7.5.2",
         "uuid": "^9.0.0"
     },
     "peerDependencies": {
