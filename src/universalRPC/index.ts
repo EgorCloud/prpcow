@@ -206,9 +206,16 @@ export default class UniversalRPC extends EventEmitter {
                                     item()
                                 )
                             );
-                            await this.send({
-                                type: "closeRequestConfirm",
-                            });
+                            try {
+                                await this.send({
+                                    type: "closeRequestConfirm",
+                                });
+                            } catch (e) {
+                                this.logger.error(
+                                    `Error while sending closeRequestConfirm`,
+                                    e
+                                );
+                            }
                         },
                         closeRequestConfirm: async () => {
                             this.logger.silly(
@@ -243,7 +250,14 @@ export default class UniversalRPC extends EventEmitter {
                 );
             } catch (e) {
                 this.logger.error(e);
-                await this.send(badRequestUtil(e));
+                try {
+                    await this.send(badRequestUtil(e));
+                } catch (error) {
+                    this.logger.error(
+                        `Error while sending badRequest response`,
+                        error
+                    );
+                }
                 await this.error(e);
                 this.logger.silly(`Event "error" emitted`);
                 this.session.close();
@@ -256,17 +270,27 @@ export default class UniversalRPC extends EventEmitter {
 
     private async sendUpgradeModel(model: any) {
         this.logger.debug("Sending upgrade model:", model);
-        return this.send({
-            type: "upgradeModel",
-            data: model,
-        });
+        try {
+            await this.send({
+                type: "upgradeModel",
+                data: model,
+            });
+        } catch (e) {
+            this.logger.error(`Error while sending upgrade model`, e);
+            throw e;
+        }
     }
 
     private async sendFunctionResolver(data: any) {
-        return this.send({
-            type: "functionResolver",
-            data,
-        });
+        try {
+            await this.send({
+                type: "functionResolver",
+                data,
+            });
+        } catch (e) {
+            this.logger.error(`Error while sending function resolver`, e);
+            throw e;
+        }
     }
 
     private async error(e: Error) {
@@ -298,9 +322,14 @@ export default class UniversalRPC extends EventEmitter {
         this.logger.silly("Request close promise added");
 
         if (!closeLength) {
-            await this.send({
-                type: "closeRequest",
-            });
+            try {
+                await this.send({
+                    type: "closeRequest",
+                });
+            } catch (e) {
+                this.logger.error(`Error while sending close request`, e);
+                throw e;
+            }
             this.logger.silly("Request close sent");
         }
         return requestClosePromise;
