@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0-alpha.14](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.13...v2.0.0-alpha.14) (2023-07-03)
+
+
+### Bug Fixes
+
+* Add `try...catch` for each send function ([3fe42d8](https://github.com/yeskiy/prpcow/commit/3fe42d8e5e1df2aca106e389676cf9cd53481524))
+
 ## [2.0.0-alpha.13](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.12...v2.0.0-alpha.13) (2023-03-30)
 
 
