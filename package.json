@@ -30,7 +30,7 @@
     "dependencies": {
         "buffer": "^6.0.3",
         "events": "^3.3.0",
-        "pure-uuid": "^1.6.3",
+        "pure-uuid": "^1.6.4",
         "semver": "^7.3.8",
         "uuid": "^9.0.0"
     },
