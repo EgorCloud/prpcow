@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0-alpha.15](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.14...v2.0.0-alpha.15) (2023-09-12)
+
+
+### Bug Fixes
+
+* Temporarily disable `Session is not in opened state` due to make some traces ([932bb31](https://github.com/yeskiy/prpcow/commit/932bb31def2a1e575f4d57aa066fa12d425f2c96))
+
 ## [2.0.0-alpha.14](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.13...v2.0.0-alpha.14) (2023-07-03)
 
 
