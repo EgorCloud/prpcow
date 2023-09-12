@@ -132,9 +132,9 @@ export default class UniversalRPC extends EventEmitter {
                 ${error.stack}
                 ---------------------
                 Message:
-                ${await this.compressResolver.compress.bind(
-                    this.compressResolver
-                )(data)}
+                `,
+                    data,
+                    `
                 ---------------------
                 this variable:
                 `,
