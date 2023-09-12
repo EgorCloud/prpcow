@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0-alpha.16](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.15...v2.0.0-alpha.16) (2023-09-12)
+
+
+### Bug Fixes
+
+* change data showing due to unknown issue a failed load of compressionResolver ([6be7870](https://github.com/yeskiy/prpcow/commit/6be7870dbc55125c152305b89f772bb0c4a4ee2f))
+
 ## [2.0.0-alpha.15](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.14...v2.0.0-alpha.15) (2023-09-12)
 
 
