@@ -123,8 +123,28 @@ export default class UniversalRPC extends EventEmitter {
 
     private async send(data: any) {
         try {
-            if (this.session.readyState !== this.session.OPEN)
-                throw new Error("Session is not in opened state");
+            if (this.session.readyState !== this.session.OPEN) {
+                const error = new Error("Session is not in opened state");
+                this.logger.error("Tried to send data when session is closed");
+                this.logger.error(
+                    `
+                ---------------------
+                ${error.stack}
+                ---------------------
+                Message:
+                ${await this.compressResolver.compress.bind(
+                    this.compressResolver
+                )(data)}
+                ---------------------
+                this variable:
+                `,
+                    this,
+                    `
+                ---------------------`
+                );
+
+                return await Promise.resolve();
+            }
             return this.session.send(
                 await this.compressResolver.compress.bind(
                     this.compressResolver
