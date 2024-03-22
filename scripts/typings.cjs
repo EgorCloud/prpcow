@@ -3,12 +3,21 @@ const path = require("path");
 
 const buildDir = path.join(__dirname, "../dist");
 (() => {
-    fs.readdir(buildDir, (error, dirs) => {
+    fs.readdir(buildDir, (error, items) => {
         if (error) {
             throw error;
         }
-        dirs.forEach((dir) => {
+        
+        items.filter((item) =>
+            fs.statSync(path.join(buildDir, item)).isDirectory()
+        ).forEach((dir) => {
             const packageJsonFile = path.join(buildDir, dir, "/package.json");
+            if (!fs.existsSync(packageJsonFile)) {
+                fs.copyFileSync(
+                    path.join(__dirname, "../package.json"),
+                    packageJsonFile
+                );
+            }
             switch (dir) {
                 case "cjs":
                     fs.readFile(packageJsonFile, "utf8", (err, data) => {
@@ -20,7 +29,7 @@ const buildDir = path.join(__dirname, "../dist");
                         fs.writeFileSync(
                             packageJsonFile,
                             JSON.stringify(packageJson, null, 2),
-                            "utf8",
+                            "utf8"
                         );
                     });
                     break;
@@ -34,7 +43,7 @@ const buildDir = path.join(__dirname, "../dist");
                         fs.writeFileSync(
                             packageJsonFile,
                             JSON.stringify(packageJson, null, 2),
-                            "utf8",
+                            "utf8"
                         );
                     });
                     break;

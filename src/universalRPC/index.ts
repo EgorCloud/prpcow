@@ -46,7 +46,7 @@ export default class UniversalRPC extends EventEmitter {
             CompressResolver: ICompressResolver;
             IdResolver: IIdResolver;
             logger: LoggerOptions | boolean;
-        }
+        },
     ) {
         super();
         this.options = options;
@@ -90,10 +90,10 @@ export default class UniversalRPC extends EventEmitter {
             session: this.session,
             sendMessage: this.sendFunctionResolver.bind(this),
             deSerializeObject: this.modelResolver.deserialize.bind(
-                this.modelResolver
+                this.modelResolver,
             ),
             serializeObject: this.modelResolver.serialize.bind(
-                this.modelResolver
+                this.modelResolver,
             ),
             uuid: this.idResolver.gen.bind(this.idResolver),
             logger: {
@@ -112,9 +112,9 @@ export default class UniversalRPC extends EventEmitter {
         this.session.addEventListener("message", async (data) =>
             this.onMessage.bind(this)(
                 await this.compressResolver.decompress.bind(
-                    this.compressResolver
-                )(data)
-            )
+                    this.compressResolver,
+                )(data),
+            ),
         );
         this.logger.silly("Session event listener added");
         this.session.addEventListener("close", this.close.bind(this));
@@ -124,7 +124,9 @@ export default class UniversalRPC extends EventEmitter {
     private async send(data: any) {
         try {
             if (this.session.readyState !== this.session.OPEN) {
-                const error = new Error("Session is not in opened state");
+                const error = new Error(
+                    "Session is not Opened. Cannot send data",
+                );
                 this.logger.error("Tried to send data when session is closed");
                 this.logger.error(
                     `
@@ -140,15 +142,14 @@ export default class UniversalRPC extends EventEmitter {
                 `,
                     this,
                     `
-                ---------------------`
+                ---------------------`,
                 );
-
-                return await Promise.resolve();
+                throw error;
             }
             return this.session.send(
                 await this.compressResolver.compress.bind(
-                    this.compressResolver
-                )(data)
+                    this.compressResolver,
+                )(data),
             );
         } catch (e) {
             this.logger.trace(data, e);
@@ -177,8 +178,8 @@ export default class UniversalRPC extends EventEmitter {
         if (this.session.readyState !== this.session.OPEN) {
             this.logger.warn(
                 `Accepted (${JSON.stringify(
-                    requestData
-                )}) when session is not opened. Skipping...`
+                    requestData,
+                )}) when session is not opened. Skipping...`,
             );
         } else {
             try {
@@ -192,16 +193,16 @@ export default class UniversalRPC extends EventEmitter {
                                     await this.modelResolver.deserialize(
                                         requestData.data,
                                         this.functionResolver.setTheirs.bind(
-                                            this.functionResolver
-                                        )
-                                    )
-                                )
+                                            this.functionResolver,
+                                        ),
+                                    ),
+                                ),
                             );
                             this.theirsModelChange();
                         },
                         functionResolver: () => {
                             this.logger.silly(
-                                `"functionResolver" type received`
+                                `"functionResolver" type received`,
                             );
                             this.functionResolver.onMessage(requestData.data);
                         },
@@ -209,7 +210,7 @@ export default class UniversalRPC extends EventEmitter {
                             const generatedError = new RuntimeError(
                                 requestData.error.message,
                                 requestData.error.status,
-                                requestData.error.name
+                                requestData.error.name,
                             );
                             this.logger.error(`Error received`, generatedError);
                             this.error(generatedError);
@@ -223,8 +224,8 @@ export default class UniversalRPC extends EventEmitter {
                              */
                             await Promise.all(
                                 this.listeners("closeRequest").map((item) =>
-                                    item()
-                                )
+                                    item(),
+                                ),
                             );
                             try {
                                 await this.send({
@@ -233,19 +234,19 @@ export default class UniversalRPC extends EventEmitter {
                             } catch (e) {
                                 this.logger.error(
                                     `Error while sending closeRequestConfirm`,
-                                    e
+                                    e,
                                 );
                             }
                         },
                         closeRequestConfirm: async () => {
                             this.logger.silly(
-                                `"requestCloseConfirm" type received`
+                                `"requestCloseConfirm" type received`,
                             );
                             if (this._closeRequestSides.length) {
                                 await Promise.all(
                                     this._closeRequestSides.map(
-                                        (resolve: Function) => resolve()
-                                    )
+                                        (resolve: Function) => resolve(),
+                                    ),
                                 );
                                 this.logger.silly(`Close requests resolved`);
 
@@ -260,13 +261,13 @@ export default class UniversalRPC extends EventEmitter {
                             this.logger.warn(
                                 `Ready event is already received on previous connector. Ignoring... 
                             This bug occurs mostly on React Native, but can be on other platforms too. 
-                            If you are facing this bug and your platform is not React Native, please, create an issue on GitHub`
+                            If you are facing this bug and your platform is not React Native, please, create an issue on GitHub`,
                             );
                         },
                     },
                     () => {
                         throw new Error("Unexpected Type");
-                    }
+                    },
                 );
             } catch (e) {
                 this.logger.error(e);
@@ -275,7 +276,7 @@ export default class UniversalRPC extends EventEmitter {
                 } catch (error) {
                     this.logger.error(
                         `Error while sending badRequest response`,
-                        error
+                        error,
                     );
                 }
                 await this.error(e);
@@ -357,7 +358,7 @@ export default class UniversalRPC extends EventEmitter {
 
     addEventListener(
         method: "theirsModelChange",
-        cb: (event: any) => void
+        cb: (event: any) => void,
     ): void;
     addEventListener(method: "error", cb: (error: Error) => void): void;
     addEventListener(method: "close", cb: () => void): void;
@@ -372,7 +373,7 @@ export default class UniversalRPC extends EventEmitter {
         this._oursModel = new Proxy(newModel, {
             set: (target, prop, value) => {
                 this.logger.silly(
-                    `Upgrade ${prop as string} to ${value} in oursModel started`
+                    `Upgrade ${prop as string} to ${value} in oursModel started`,
                 );
 
                 Reflect.set(target, prop, value);
@@ -381,7 +382,7 @@ export default class UniversalRPC extends EventEmitter {
                 this.logger.silly(
                     `Upgrade ${
                         prop as string
-                    } to ${value} in oursModel done. Waiting for send`
+                    } to ${value} in oursModel done. Waiting for send`,
                 );
                 return true;
             },
@@ -405,8 +406,8 @@ export default class UniversalRPC extends EventEmitter {
         await this.sendUpgradeModel(
             await this.modelResolver.serialize(
                 this.oursModel,
-                this.functionResolver.setOurs.bind(this.functionResolver)
-            )
+                this.functionResolver.setOurs.bind(this.functionResolver),
+            ),
         );
         this.logger.debug("Sent upgrade model");
     }

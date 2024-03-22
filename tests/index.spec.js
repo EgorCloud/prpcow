@@ -48,7 +48,7 @@ describe("Base tests", () => {
                     } else {
                         resolve(session);
                     }
-                }
+                },
             );
         });
         expect(client).toBeDefined();
@@ -92,12 +92,12 @@ describe("Base tests", () => {
                         session.on("theirsModelChange", async (model) => {
                             console.log(
                                 "client session theirsModelChange",
-                                model
+                                model,
                             );
                             resolve(session);
                         });
                     }
-                }
+                },
             );
         });
         expect(client).toBeDefined();
@@ -158,7 +158,7 @@ describe("Base tests", () => {
                             resolve(session);
                         });
                     }
-                }
+                },
             );
         });
         expect(client).toBeDefined();
@@ -230,12 +230,12 @@ describe("Base tests", () => {
                         session.on("theirsModelChange", async (model) => {
                             console.log(
                                 "client session theirsModelChange",
-                                model
+                                model,
                             );
                             resolve(session);
                         });
                     }
-                }
+                },
             );
         });
         expect(client).toBeDefined();
@@ -246,7 +246,7 @@ describe("Base tests", () => {
         setTimeout(() => {
             for (let i = 0; i < chunks; i++) {
                 passThrough.write(
-                    jsonData.slice(i * chunkSize, (i + 1) * chunkSize)
+                    jsonData.slice(i * chunkSize, (i + 1) * chunkSize),
                 );
             }
             setTimeout(() => {
@@ -302,7 +302,7 @@ describe("Base tests", () => {
                             resolve(session);
                         });
                     }
-                }
+                },
             );
         });
         let isClientGotClosed = false;
@@ -326,94 +326,111 @@ describe("Base tests", () => {
 
         expect(isClientGotClosed).toBeTruthy();
     });
-    // it("should send function removing after cleanup check", async () => {
-    //     const server = new Server({
-    //         ws: {
-    //             port: 9095,
-    //         },
-    //         logger: {
-    //             level: "silly",  callback: consoleLogTransport,
-    //
-    //         },
-    //     });
-    //     let sessionId = null;
-    //     server.on("newSession", (session) => {
-    //         console.log("server session connected");
-    //         sessionId = session.sessionId;
-    //         session.setOursModel({
-    //             name: "server",
-    //             some: {
-    //                 ping: async () => {
-    //                     setTimeout(() => {
-    //                         session.setOursModel({
-    //                             otherPing: () => "otherPong",
-    //                         });
-    //                     }, 100);
-    //                     return "pong";
-    //                 },
-    //                 test: () => "1",
-    //             },
-    //         });
-    //     });
-    //     expect(server).toBeDefined();
-    //     const client = await new Promise((resolve, reject) => {
-    //         new Client(
-    //             WebSocket,
-    //             "ws://localhost:9095",
-    //             [],
-    //             {
-    //                 logger: {
-    //                     level: "silly",  callback: consoleLogTransport,
-    //
-    //                 },
-    //             },
-    //             (err, session) => {
-    //                 if (err) {
-    //                     reject(err);
-    //                 } else {
-    //                     session.once("theirsModelChange", async (model) => {
-    //                         console.log(
-    //                             "client session theirsModelChange",
-    //                             model
-    //                         );
-    //                         resolve(session);
-    //                     });
-    //                 }
-    //             }
-    //         );
-    //     });
-    //     expect(client).toBeDefined();
-    //     const newModelEvent = new Promise((resolve) => {
-    //         client.once("theirsModelChange", async (model) => {
-    //             console.log("client session theirsModelChange", model);
-    //             resolve(client);
-    //         });
-    //     });
-    //     const result = await client.theirsModel.some.ping();
-    //     expect(result).toEqual("pong");
-    //     await newModelEvent;
-    //     expect(client.theirsModel.otherPing).toBeTruthy();
-    //     expect(
-    //         Object.keys(
-    //             server.activeSessions[sessionId].functionResolver.oursFunctions
-    //         ).length
-    //     ).toEqual(3);
-    //     if (global.gc) {
-    //         global.gc();
-    //     } else {
-    //         throw new Error("global.gc is Required for this test.");
-    //     }
-    //     client.functionResolver.findUnusedFunctions();
-    //     await new Promise((resolve) => {
-    //         setTimeout(resolve, 100);
-    //     });
-    //     expect(
-    //         Object.keys(
-    //             server.activeSessions[sessionId].functionResolver.oursFunctions
-    //         ).length
-    //     ).toEqual(2);
-    //     await server.close();
-    // });
+
+    it("should send function removing after cleanup check", async () => {
+        const server = new Server({
+            ws: {
+                port: 9095,
+            },
+            logger: {
+                level: "silly",
+                callback: consoleLogTransport,
+            },
+        });
+        let sessionId = null;
+        server.on("newSession", (session) => {
+            console.log("server session connected");
+            sessionId = session.sessionId;
+            session.setOursModel({
+                name: "server",
+                some: {
+                    ping: async () => {
+                        setTimeout(() => {
+                            session.setOursModel({
+                                otherPing: () => "otherPong",
+                            });
+                        }, 100);
+                        return "pong";
+                    },
+                    test: () => "1",
+                },
+            });
+        });
+        expect(server).toBeDefined();
+        let client = await new Promise((resolve, reject) => {
+            new Client(
+                WebSocket,
+                "ws://localhost:9095",
+                [],
+                {
+                    logger: {
+                        level: "silly",
+                        callback: consoleLogTransport,
+                    },
+                },
+                (err, session) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        session.once("theirsModelChange", async (model) => {
+                            console.log(
+                                "client session theirsModelChange",
+                                model,
+                            );
+                            resolve(session);
+                        });
+                    }
+                },
+            );
+        });
+        expect(client).toBeDefined();
+        const newModelEvent = new Promise((resolve) => {
+            client.once("theirsModelChange", async (model) => {
+                console.log(
+                    "client session theirsModelChange secondary",
+                    model,
+                );
+                resolve(client);
+            });
+        });
+        expect(
+            Object.keys(
+                (await server.sessionStoreResolver.get(sessionId))
+                    .functionResolver.oursFunctions,
+            ).length,
+        ).toEqual(2);
+        const result = await client.theirsModel.some.ping();
+
+        expect(result).toEqual("pong");
+        client = await newModelEvent;
+        expect(client.theirsModel.otherPing).toBeTruthy();
+
+        await new Promise((resolve) => {
+            setTimeout(resolve, 100);
+        });
+
+        if (global.gc) {
+            global.gc();
+        } else {
+            throw new Error("global.gc is Required for this test.");
+        }
+        client.functionResolver.findUnusedFunctions();
+        await new Promise((resolve) => {
+            setTimeout(resolve, 100);
+        });
+        client.functionResolver.findUnusedFunctions();
+        await new Promise((resolve) => {
+            setTimeout(resolve, 100);
+        });
+
+        expect(
+            Object.keys(
+                (await server.sessionStoreResolver.get(sessionId))
+                    .functionResolver.oursFunctions,
+            ).length,
+        ).toEqual(1);
+        await server.close();
+    });
     it("should create server and client can connect and got an error when connection is lost", async () => {
         const server = new Server({
             ws: {
@@ -455,12 +472,12 @@ describe("Base tests", () => {
                         session.on("theirsModelChange", async (model) => {
                             console.log(
                                 "client session theirsModelChange",
-                                model
+                                model,
                             );
                             resolve(session);
                         });
                     }
-                }
+                },
             );
         });
         let isGotError = false;
@@ -521,17 +538,90 @@ describe("Base tests", () => {
                         session.on("theirsModelChange", async (model) => {
                             console.log(
                                 "client session theirsModelChange",
-                                model
+                                model,
                             );
                             resolve(session);
                         });
                     }
-                }
+                },
             );
         });
         expect(client).toBeDefined();
         const result = await client.theirsModel.some.ping();
         expect(result.coolData).toEqual("pong");
+        await server.close();
+    });
+
+    it("should not catch class parameter change", async () => {
+        const server = new Server({
+            ws: {
+                port: 9099,
+            },
+            logger: {
+                level: "silly",
+                callback: consoleLogTransport,
+            },
+        });
+        class SomeClass {
+            parameter = "initial value";
+
+            constructor() {
+                this.changeParameter = this.changeParameter.bind(this);
+            }
+
+            changeParameter(newValue) {
+                console.log(this);
+                console.log("changeParameter", newValue);
+                this.parameter = newValue;
+                return this.parameter;
+            }
+        }
+
+        server.on("newSession", (session) => {
+            console.log("server session connected");
+            session.setOursModel({
+                name: "server",
+                some: {
+                    greatClass: new SomeClass(),
+                },
+            });
+        });
+        expect(server).toBeDefined();
+        const client = await new Promise((resolve, reject) => {
+            new Client(
+                WebSocket,
+                "ws://localhost:9099",
+                [],
+                {
+                    logger: {
+                        level: "silly",
+                        callback: consoleLogTransport,
+                    },
+                },
+                (err, session) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        session.on("theirsModelChange", async (model) => {
+                            console.log(
+                                "client session theirsModelChange",
+                                model,
+                            );
+                            resolve(session);
+                        });
+                    }
+                },
+            );
+        });
+        expect(client).toBeDefined();
+        const result =
+            await client.theirsModel.some.greatClass.changeParameter(
+                "new value",
+            );
+        expect(client.theirsModel.some.greatClass.parameter).toEqual(
+            "initial value",
+        );
+        expect(result).toEqual("new value");
         await server.close();
     });
 });

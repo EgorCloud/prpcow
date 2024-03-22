@@ -107,7 +107,7 @@ export class Server extends EventEmitter {
 
     private onConnection(
         websocketInstance: ModifiedWebSocket,
-        request?: http.IncomingMessage
+        request?: http.IncomingMessage,
     ) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars,@typescript-eslint/naming-convention
         const _request = request;
@@ -126,7 +126,7 @@ export class Server extends EventEmitter {
                 const clientRequest = JSON.parse(messageText.data as string);
                 requestLogger.debug(
                     `Received init request with data:`,
-                    clientRequest
+                    clientRequest,
                 );
 
                 typeAssert(
@@ -139,24 +139,24 @@ export class Server extends EventEmitter {
                                 !(
                                     satisfies(
                                         this.options.version,
-                                        clientRequest.data.version
+                                        clientRequest.data.version,
                                     ) &&
                                     this.options.universalRPC.FunctionResolver.isCompatibleWith(
-                                        clientRequest.data.functionResolver
+                                        clientRequest.data.functionResolver,
                                     ) &&
                                     this.options.universalRPC.ModelResolver.isCompatibleWith(
-                                        clientRequest.data.modelResolver
+                                        clientRequest.data.modelResolver,
                                     ) &&
                                     this.options.universalRPC.CompressResolver.isCompatibleWith(
-                                        clientRequest.data.compressResolver
+                                        clientRequest.data.compressResolver,
                                     ) &&
                                     this.options.universalRPC.IdResolver.isCompatibleWith(
-                                        clientRequest.data.idResolver
+                                        clientRequest.data.idResolver,
                                     )
                                 )
                             ) {
                                 requestLogger.silly(
-                                    `Client version or functionResolver or modelResolver or CompressResolver is not compatible with server version`
+                                    `Client version or functionResolver or modelResolver or CompressResolver is not compatible with server version`,
                                 );
                                 requestLogger.debug(
                                     `Server version: ${this.options.version}, Client version: ${clientRequest.data.version}`,
@@ -171,19 +171,19 @@ export class Server extends EventEmitter {
                                     }`,
                                     `Server idResolver: ${this.options.universalRPC.IdResolver.typeName()}, Client idResolver: ${
                                         clientRequest.data.idResolver
-                                    }`
+                                    }`,
                                 );
                                 throw new RuntimeError(
                                     `Client version or functionResolver or modelResolver or compressResolver is not compatible with server version. ${
                                         !semver.eq(
                                             this.options.version,
-                                            clientRequest.data.version
+                                            clientRequest.data.version,
                                         )
                                             ? ""
                                             : `Server version: ${this.options.version}, Client version: ${clientRequest.data.version}`
                                     } ${
                                         !this.options.universalRPC.FunctionResolver.isCompatibleWith(
-                                            clientRequest.data.functionResolver
+                                            clientRequest.data.functionResolver,
                                         )
                                             ? ""
                                             : `Server functionResolver: ${this.options.universalRPC.FunctionResolver.typeName()}, Client functionResolver: ${
@@ -192,7 +192,7 @@ export class Server extends EventEmitter {
                                               }`
                                     } ${
                                         !this.options.universalRPC.ModelResolver.isCompatibleWith(
-                                            clientRequest.data.modelResolver
+                                            clientRequest.data.modelResolver,
                                         )
                                             ? ""
                                             : `Server modelResolver: ${this.options.universalRPC.ModelResolver.typeName()}, Client modelResolver: ${
@@ -201,7 +201,7 @@ export class Server extends EventEmitter {
                                               }`
                                     } ${
                                         !this.options.universalRPC.CompressResolver.isCompatibleWith(
-                                            clientRequest.data.compressResolver
+                                            clientRequest.data.compressResolver,
                                         )
                                             ? ""
                                             : `Server compressResolver: ${this.options.universalRPC.CompressResolver.typeName()}, Client compressResolver: ${
@@ -210,7 +210,7 @@ export class Server extends EventEmitter {
                                               }`
                                     } ${
                                         !this.options.universalRPC.IdResolver.isCompatibleWith(
-                                            clientRequest.data.idResolver
+                                            clientRequest.data.idResolver,
                                         )
                                             ? ""
                                             : `Server idResolver: ${this.options.universalRPC.IdResolver.typeName()}, Client idResolver: ${
@@ -218,12 +218,12 @@ export class Server extends EventEmitter {
                                               }`
                                     }`,
                                     400,
-                                    "Bad Request"
+                                    "Bad Request",
                                 );
                             }
 
                             requestLogger.silly(
-                                `Client version and functionResolver and modelResolver and compressResolver is compatible with server version`
+                                `Client version and functionResolver and modelResolver and compressResolver is compatible with server version`,
                             );
 
                             const universalRPC = new UniversalRPC(
@@ -233,18 +233,18 @@ export class Server extends EventEmitter {
                                         parentLogger: requestLogger,
                                     },
                                     ...this.options.universalRPC,
-                                }
+                                },
                             );
                             requestLogger.silly(
-                                `UniversalRPC instance created`
+                                `UniversalRPC instance created`,
                             );
 
                             websocketInstance.removeEventListener(
                                 "message",
-                                initMessageOperator
+                                initMessageOperator,
                             );
                             requestLogger.silly(
-                                "Removed init message listener"
+                                "Removed init message listener",
                             );
 
                             websocketInstance.on("pong", () => {
@@ -258,7 +258,7 @@ export class Server extends EventEmitter {
                                 JSON.stringify({
                                     type: "ready",
                                     data: { key },
-                                })
+                                }),
                             );
 
                             websocketInstance.ping();
@@ -277,9 +277,9 @@ export class Server extends EventEmitter {
                         throw new RuntimeError(
                             "Could not understand request",
                             400,
-                            "Bad request"
+                            "Bad request",
                         );
-                    }
+                    },
                 );
             } catch (e) {
                 requestLogger.error(e);
@@ -303,7 +303,7 @@ export class Server extends EventEmitter {
             idResolver: this.options.universalRPC.IdResolver.typeName(),
         };
         websocketInstance.send(
-            JSON.stringify({ type: "init", data: initPayload })
+            JSON.stringify({ type: "init", data: initPayload }),
         );
         requestLogger.debug(`Sent init status with message:`, initPayload);
     }
@@ -311,16 +311,16 @@ export class Server extends EventEmitter {
     private async newSession(universalRPC: UniversalRPC) {
         universalRPC.addListener("close", async () => {
             this.logger.debug(
-                `UniversalRPC session closed (${universalRPC.sessionId}), removing session from sessions store`
+                `UniversalRPC session closed (${universalRPC.sessionId}), removing session from sessions store`,
             );
             await this.sessionStoreResolver.delete(universalRPC.sessionId);
         });
         await this.sessionStoreResolver.set(
             universalRPC.sessionId,
-            universalRPC
+            universalRPC,
         );
         this.logger.silly(
-            `New UniversalRPC session set (${universalRPC.sessionId})`
+            `New UniversalRPC session set (${universalRPC.sessionId})`,
         );
 
         this.emit("newSession", universalRPC);
@@ -330,8 +330,8 @@ export class Server extends EventEmitter {
     public async close(closeWebsocketServer = true): Promise<void> {
         await Promise.all(
             Object.values(await this.sessionStoreResolver.getAll()).map(
-                async (universalRPC) => universalRPC.closeRequest()
-            )
+                async (universalRPC) => universalRPC.closeRequest(),
+            ),
         );
 
         if (closeWebsocketServer) {

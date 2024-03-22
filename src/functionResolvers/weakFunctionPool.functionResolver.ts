@@ -1,54 +1,17 @@
-// eslint-disable-next-line max-classes-per-file
 import typeAssert, { DataObject } from "../utils/typeAssert.util";
 import { FunctionResolver } from "./index";
 import { ModifiedWebSocket } from "../utils/websocketModifier.util";
 import { ModelResolver } from "../modelResolvers";
 import { Logger, LoggerOptions } from "../utils/logger.util";
 import { IdResolver } from "../idResolvers";
+import InvertedWeakMap from "./utils/invertedWeakMap.util";
+import { FunctionResolverFunction } from "../types";
 
 const constants = {
     errors: {
         CONNECTION_LOST: "CONNECTION_LOST",
     },
 };
-
-export class TextWeakMap extends WeakMap {
-    private readonly textAdapter: Map<any, any>;
-
-    constructor(entries?: readonly [object, any][] | null) {
-        super(entries);
-        this.textAdapter = new Map();
-    }
-
-    set(key: any | string, value: any) {
-        // eslint-disable-next-line no-new-wrappers
-        const ObjectKey = new String(key);
-        this.textAdapter.set(key, ObjectKey);
-        return super.set(ObjectKey, value);
-    }
-
-    delete(key: any | string) {
-        const result = super.delete(this.textAdapter.get(key));
-        this.textAdapter.delete(key);
-        return result;
-    }
-
-    get(key: any | string) {
-        return super.get(this.textAdapter.get(key));
-    }
-
-    has(key: any) {
-        return super.has(this.textAdapter.get(key));
-    }
-
-    getTextAdapter() {
-        return this.textAdapter;
-    }
-
-    getTextAdapterKeys() {
-        return Array.from(this.textAdapter.keys());
-    }
-}
 
 export default class WeakFunctionPool extends FunctionResolver {
     static typeName() {
@@ -65,7 +28,7 @@ export default class WeakFunctionPool extends FunctionResolver {
 
     private theirsFunctionsIds: string[];
 
-    private theirsFunctions: TextWeakMap;
+    private theirsFunctions: InvertedWeakMap;
 
     private findUnusedTimeout: any;
 
@@ -79,7 +42,7 @@ export default class WeakFunctionPool extends FunctionResolver {
     }) {
         super(options);
         this.oursFunctions = {};
-        this.theirsFunctions = new TextWeakMap();
+        this.theirsFunctions = new InvertedWeakMap();
         this.theirsFunctionsIds = [];
         this.theirsFunctionsWaitPool = {};
         this.timeoutSize = 600 * 1000;
@@ -89,10 +52,10 @@ export default class WeakFunctionPool extends FunctionResolver {
                 this.findUnusedFunctions();
                 this.findUnusedTimeout = setTimeout(
                     findUnused.bind(this),
-                    this.timeoutSize
+                    this.timeoutSize,
                 );
             }.bind(this),
-            this.timeoutSize
+            this.timeoutSize,
         );
         this.logger.silly("Created findUnusedTimeout with", {
             timeoutSize: this.timeoutSize,
@@ -103,14 +66,14 @@ export default class WeakFunctionPool extends FunctionResolver {
                 const err = new Error(
                     `Session Connection was closed with code "${code}" ${
                         reason ? `and message: "${reason}"` : ""
-                    }`
+                    }`,
                 );
                 // @ts-ignore
                 err.type = constants.errors.CONNECTION_LOST;
                 // @ts-ignore
                 err.__from = "theirs";
                 item(err);
-            })
+            }),
         );
         this.logger.silly("Mounted event listener on close event");
 
@@ -149,7 +112,7 @@ export default class WeakFunctionPool extends FunctionResolver {
                 clear: () => {
                     this.logger.silly("Clear message received");
                     message.data.ids.map((id: string) =>
-                        Reflect.deleteProperty(this.oursFunctions, id)
+                        Reflect.deleteProperty(this.oursFunctions, id),
                     );
                     this.logger.debug(`Cleared ${message.data.ids} functions`);
                 },
@@ -167,52 +130,52 @@ export default class WeakFunctionPool extends FunctionResolver {
                                             await this.getOurs(message.data.id),
                                             ...(await this.options.deSerializeObject(
                                                 message.data.payload,
-                                                this.setTheirs.bind(this)
-                                            ))
+                                                this.setTheirs.bind(this),
+                                            )),
                                         ),
-                                        this.setOurs.bind(this)
+                                        this.setOurs.bind(this),
                                     ),
-                                }
-                            )
+                                },
+                            ),
                         );
                     } catch (e) {
                         this.logger.warn(
                             `Error on execute function (function id: ${message.data.id}, request id: ${message.requestId})`,
-                            e
+                            e,
                         );
                     }
                 },
                 executeResponse: async () => {
                     this.logger.silly(
-                        `Got Response on execute (${message.requestId})`
+                        `Got Response on execute (${message.requestId})`,
                     );
                     this.theirsFunctionsWaitPool[message.requestId](
                         await this.options.deSerializeObject(
                             message.data.payload,
-                            this.setTheirs.bind(this)
-                        )
+                            this.setTheirs.bind(this),
+                        ),
                     );
                     Reflect.deleteProperty(
                         this.theirsFunctionsWaitPool,
-                        message.requestId
+                        message.requestId,
                     );
                     this.logger.silly(
-                        `Remove from wait pool (${message.requestId})`
+                        `Remove from wait pool (${message.requestId})`,
                     );
                 },
             },
             () => {
                 this.logger.silly(
-                    `Bad type ${message.type} received. Throw an error`
+                    `Bad type ${message.type} received. Throw an error`,
                 );
                 throw new Error(
                     `Could not understand request. ${
                         message.type
                             ? `Type is "${message.type}"`
                             : "No type presented"
-                    }`
+                    }`,
                 );
-            }
+            },
         );
     }
 
@@ -230,7 +193,7 @@ export default class WeakFunctionPool extends FunctionResolver {
                 new Promise(async (resolve, reject) => {
                     this.logger.debug(
                         `Theirs function wrapper called (${id}) with params:`,
-                        params
+                        params,
                     );
                     const requestId = await this.options.uuid();
                     const requestLogger = Logger.child({
@@ -238,10 +201,10 @@ export default class WeakFunctionPool extends FunctionResolver {
                         parentLogger: this.logger,
                     });
                     this.theirsFunctionsWaitPool[requestId] = (
-                        response: any
+                        response: any,
                     ) => {
                         requestLogger.silly(
-                            `Got Response by function response Handler`
+                            `Got Response by function response Handler`,
                         );
                         if (
                             typeof response === "object" &&
@@ -262,28 +225,30 @@ export default class WeakFunctionPool extends FunctionResolver {
                                 id,
                                 payload: await this.options.serializeObject(
                                     params,
-                                    this.setOurs.bind(this)
+                                    this.setOurs.bind(this),
                                 ),
-                            })
+                            }),
                         );
                         requestLogger.silly(
-                            `Theirs function wrapper request sent`
+                            `Theirs function wrapper request sent`,
                         );
                     } catch (e) {
                         requestLogger.silly(
-                            `Theirs function wrapper request failed`
+                            `Theirs function wrapper request failed`,
                         );
                         Reflect.deleteProperty(
                             this.theirsFunctionsWaitPool,
-                            requestId
+                            requestId,
                         );
                         requestLogger.silly(`Remove from wait pool`);
                         reject(e);
                     }
-                })
+                }),
         );
         this.theirsFunctionsIds.push(id);
-        return this.theirsFunctions.get(id);
+        return this.theirsFunctions.get(
+            id,
+        ) as Promise<FunctionResolverFunction>;
     }
 
     /**
@@ -297,7 +262,7 @@ export default class WeakFunctionPool extends FunctionResolver {
             .map((item) => item.id);
         if (functionIds.length) {
             this.options.sendMessage(
-                this.baseMessageBuilder("clear", { ids: functionIds })
+                this.baseMessageBuilder("clear", { ids: functionIds }),
             );
             this.logger.debug(`Found ${functionIds.length} functions`);
             this.logger.silly("Clear request sent");
@@ -310,7 +275,7 @@ export default class WeakFunctionPool extends FunctionResolver {
 
     async getTheirs(id: string) {
         return this.theirsFunctions.has(id)
-            ? this.theirsFunctions.get(id)
+            ? ((await this.theirsFunctions.get(id)) as FunctionResolverFunction)
             : null;
     }
 

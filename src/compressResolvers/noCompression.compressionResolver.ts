@@ -14,7 +14,7 @@ export default class NoCompressionResolver extends CompressResolver {
 
     // eslint-disable-next-line class-methods-use-this
     public async decompress(
-        messageEvent: WebSocket.MessageEvent
+        messageEvent: WebSocket.MessageEvent,
     ): Promise<object> {
         return JSON.parse(<string>messageEvent.data);
     }

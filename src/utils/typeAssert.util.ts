@@ -9,7 +9,7 @@ export type TypeObject = {
 export default function typeAssert(
     data: DataObject,
     typeObject: TypeObject,
-    noDefined: (data: TypeObject) => void
+    noDefined: (data: TypeObject) => void,
 ) {
     const keys = Object.keys(typeObject);
     if (data.type) {

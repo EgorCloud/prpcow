@@ -9,7 +9,11 @@
         "sourceMap": true,
         "target": "ES6",
         "lib": [
-            "es6"
+            "es6",
+            "es2021"
+        ],
+        "typeRoots": [
+            "node_modules/@types"
         ],
         "allowJs": true
     },

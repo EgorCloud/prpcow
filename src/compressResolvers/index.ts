@@ -21,9 +21,9 @@ export abstract class CompressResolver extends Resolver {
             this.logger = new Logger({
                 ...this.options.logger,
                 name: `${Object.getPrototypeOf(
-                    this
+                    this,
                 ).constructor.typeName()} ${this.options.session.sessionId.slice(
-                    -4
+                    -4,
                 )}`,
             });
         } else {
@@ -32,7 +32,7 @@ export abstract class CompressResolver extends Resolver {
     }
     public abstract compress(messageEvent: object): Promise<BufferLike>;
     public abstract decompress(
-        messageEvent: WebSocket.MessageEvent
+        messageEvent: WebSocket.MessageEvent,
     ): Promise<object>;
 }
 

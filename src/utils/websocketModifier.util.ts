@@ -24,7 +24,7 @@ export type ModifiedWebSocket = WebSocket & {
 };
 
 export default function websocketModifier(
-    websocket: WebSocket
+    websocket: WebSocket,
 ): ModifiedWebSocket {
     const modifiedWebsocket: ModifiedWebSocket =
         websocket as unknown as ModifiedWebSocket;

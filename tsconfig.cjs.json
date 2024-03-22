@@ -3,7 +3,7 @@
     "compilerOptions": {
         "outDir": "dist/cjs",
         "declarationDir": "dist/types",
-        "module": "commonjs",
+        "module": "commonjs"
     },
     "include": [
         "src/**/*",

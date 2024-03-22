@@ -35,11 +35,11 @@ export default class DefaultModelResolver extends ModelResolver {
         [key: string]: {
             deserialize?: (
                 model: any,
-                getFunction: FunctionResolver["setTheirs"]
+                getFunction: FunctionResolver["setTheirs"],
             ) => Promise<any>;
             serialize?: (
                 model: any,
-                getFunctionId: FunctionResolver["setOurs"]
+                getFunctionId: FunctionResolver["setOurs"],
             ) => Promise<string>;
         };
     };
@@ -48,7 +48,7 @@ export default class DefaultModelResolver extends ModelResolver {
         [key: string]: {
             serialize?: (
                 model: any,
-                getFunctionId: FunctionResolver["setOurs"]
+                getFunctionId: FunctionResolver["setOurs"],
             ) => Promise<any | void>;
         };
     };
@@ -162,7 +162,7 @@ export default class DefaultModelResolver extends ModelResolver {
 
     async serialize(
         affectedModel: any,
-        getFunction: FunctionResolver["setOurs"]
+        getFunction: FunctionResolver["setOurs"],
     ) {
         const model = affectedModel;
         const returnValue: {
@@ -190,7 +190,7 @@ export default class DefaultModelResolver extends ModelResolver {
                     ].serialize?.(model, getFunction);
                     if (result && typeof result === "object") {
                         Object.keys(result).forEach(
-                            (key: string) => (returnValue[key] = result[key])
+                            (key: string) => (returnValue[key] = result[key]),
                         );
                     }
                 }
@@ -204,7 +204,7 @@ export default class DefaultModelResolver extends ModelResolver {
                     item !== "prototype" &&
                         (returnValue.value[item] = await this.serialize(
                             model[item],
-                            getFunction
+                            getFunction,
                         ));
                 }
                 if (
@@ -221,12 +221,12 @@ export default class DefaultModelResolver extends ModelResolver {
                         i++
                     ) {
                         const item = Object.getOwnPropertyNames(
-                            Object.getPrototypeOf(model)
+                            Object.getPrototypeOf(model),
                         )[i];
                         item !== "constructor" &&
                             (returnValue.value[item] = await this.serialize(
                                 model[item],
-                                getFunction
+                                getFunction,
                             ));
                     }
                 }
@@ -242,7 +242,7 @@ export default class DefaultModelResolver extends ModelResolver {
 
     async deserialize(
         model: { type?: string; value?: any },
-        getFunction: FunctionResolver["setTheirs"]
+        getFunction: FunctionResolver["setTheirs"],
     ) {
         if (Object.keys(this.ignoredTypes).indexOf(model.type) !== -1) {
             return model.value;
@@ -251,7 +251,7 @@ export default class DefaultModelResolver extends ModelResolver {
         if (this.overloadedTypes[model.type]?.deserialize) {
             return this.overloadedTypes[model.type].deserialize(
                 model,
-                getFunction
+                getFunction,
             );
         }
 
@@ -266,20 +266,15 @@ export default class DefaultModelResolver extends ModelResolver {
         } else if (Object.keys(this.genericTypes).indexOf(model.type) !== -1) {
             genericCreature = new this.genericTypes[model.type]();
         } else {
-            const className = model.type
-                .replace(/(^\d)/g, "_")
-                .replace(/(\W)/g, "_");
-            // eslint-disable-next-line no-eval
-            genericCreature = eval(`()=>{
-                   class ${className} {}
-                    return new ${className}
-            }`)();
+            const DynamicClass = class {};
+            Object.defineProperty(DynamicClass, "name", { value: model.type });
+            genericCreature = new DynamicClass();
         }
         for (let i = 0; i < Object.keys(model.value).length; i++) {
             const item = Object.keys(model.value)[i];
             genericCreature[item] = await this.deserialize(
                 model.value[item],
-                getFunction
+                getFunction,
             );
         }
         return genericCreature;

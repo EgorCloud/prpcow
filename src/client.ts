@@ -66,7 +66,7 @@ export class Client {
         address: string | URL,
         protocols: string | string[],
         options: ClientOptions,
-        callback: Function = () => {}
+        callback: Function = () => {},
     ) {
         const finalOptions = options || {};
         this.options = {
@@ -97,7 +97,7 @@ export class Client {
             new this.WebsocketImplementation(address, [
                 ...(Array.isArray(protocols) ? protocols : [protocols]),
                 `prpc`,
-            ])
+            ]),
         );
         this.logger.silly("Websocket created and modified");
         // @ts-ignore
@@ -112,8 +112,8 @@ export class Client {
                     const clientRequest = JSON.parse(event.data as string);
                     this.logger.debug(
                         `Received message from server: ${JSON.stringify(
-                            clientRequest
-                        )}`
+                            clientRequest,
+                        )}`,
                     );
                     typeAssert(
                         clientRequest,
@@ -122,31 +122,31 @@ export class Client {
                                 this.logger.silly("type is init");
                                 this.key = clientRequest.data.key;
                                 this.logger.debug(
-                                    `Received key from server: ${this.key}`
+                                    `Received key from server: ${this.key}`,
                                 );
 
                                 if (
                                     !(
                                         satisfies(
                                             this.options.version,
-                                            clientRequest.data.version
+                                            clientRequest.data.version,
                                         ) &&
                                         this.options.universalRPC.FunctionResolver.isCompatibleWith(
-                                            clientRequest.data.functionResolver
+                                            clientRequest.data.functionResolver,
                                         ) &&
                                         this.options.universalRPC.ModelResolver.isCompatibleWith(
-                                            clientRequest.data.modelResolver
+                                            clientRequest.data.modelResolver,
                                         ) &&
                                         this.options.universalRPC.CompressResolver.isCompatibleWith(
-                                            clientRequest.data.compressResolver
+                                            clientRequest.data.compressResolver,
                                         ) &&
                                         this.options.universalRPC.IdResolver.isCompatibleWith(
-                                            clientRequest.data.idResolver
+                                            clientRequest.data.idResolver,
                                         )
                                     )
                                 ) {
                                     this.logger.silly(
-                                        `Server version or functionResolver or modelResolver or CompressResolver is not compatible with client version`
+                                        `Server version or functionResolver or modelResolver or CompressResolver is not compatible with client version`,
                                     );
                                     this.logger.debug(
                                         `Client version: ${this.options.version}, Server version: ${clientRequest.data.version}`,
@@ -161,20 +161,20 @@ export class Client {
                                         }`,
                                         `Client idResolver: ${this.options.universalRPC.IdResolver.typeName()}, Server idResolver: ${
                                             clientRequest.data.idResolver
-                                        }`
+                                        }`,
                                     );
                                     throw new RuntimeError(
                                         `server version or functionResolver or modelResolver or compressResolver is not compatible with client version. ${
                                             !semver.eq(
                                                 this.options.version,
-                                                clientRequest.data.version
+                                                clientRequest.data.version,
                                             )
                                                 ? ""
                                                 : `Client version: ${this.options.version}, Server version: ${clientRequest.data.version}`
                                         } ${
                                             !this.options.universalRPC.FunctionResolver.isCompatibleWith(
                                                 clientRequest.data
-                                                    .functionResolver
+                                                    .functionResolver,
                                             )
                                                 ? ""
                                                 : `Client functionResolver: ${this.options.universalRPC.FunctionResolver.typeName()}, Server functionResolver: ${
@@ -183,7 +183,8 @@ export class Client {
                                                   }`
                                         } ${
                                             !this.options.universalRPC.ModelResolver.isCompatibleWith(
-                                                clientRequest.data.modelResolver
+                                                clientRequest.data
+                                                    .modelResolver,
                                             )
                                                 ? ""
                                                 : `Client modelResolver: ${this.options.universalRPC.ModelResolver.typeName()}, Server modelResolver: ${
@@ -193,7 +194,7 @@ export class Client {
                                         } ${
                                             !this.options.universalRPC.CompressResolver.isCompatibleWith(
                                                 clientRequest.data
-                                                    .compressResolver
+                                                    .compressResolver,
                                             )
                                                 ? ""
                                                 : `Client compressResolver: ${this.options.universalRPC.CompressResolver.typeName()}, Server compressResolver: ${
@@ -202,7 +203,7 @@ export class Client {
                                                   }`
                                         } ${
                                             !this.options.universalRPC.IdResolver.isCompatibleWith(
-                                                clientRequest.data.idResolver
+                                                clientRequest.data.idResolver,
                                             )
                                                 ? ""
                                                 : `Client idResolver: ${this.options.universalRPC.IdResolver.typeName()}, Server idResolver: ${
@@ -211,12 +212,12 @@ export class Client {
                                                   }`
                                         }`,
                                         400,
-                                        "Bad Request"
+                                        "Bad Request",
                                     );
                                 }
 
                                 this.logger.silly(
-                                    `Server version, functionResolver, modelResolver and compressResolver is compatible with client version`
+                                    `Server version, functionResolver, modelResolver and compressResolver is compatible with client version`,
                                 );
 
                                 const initPayload = {
@@ -234,22 +235,22 @@ export class Client {
 
                                 this.logger.debug(
                                     `Sending init message to server with payload: ${JSON.stringify(
-                                        initPayload
-                                    )}`
+                                        initPayload,
+                                    )}`,
                                 );
                                 this.websocket.send(
                                     JSON.stringify({
                                         type: "init",
                                         data: initPayload,
-                                    })
+                                    }),
                                 );
                                 this.logger.silly(
-                                    `Init message sent to server`
+                                    `Init message sent to server`,
                                 );
                             },
                             ready: () => {
                                 this.logger.silly(
-                                    `Server ready message received`
+                                    `Server ready message received`,
                                 );
 
                                 // @ts-ignore
@@ -262,29 +263,29 @@ export class Client {
                                             parentLogger: this.logger,
                                         },
                                         ...this.options.universalRPC,
-                                    }
+                                    },
                                 );
 
                                 this.logger.silly(
-                                    `UniversalRPC instance created`
+                                    `UniversalRPC instance created`,
                                 );
 
                                 this.websocket.removeEventListener(
                                     "message",
-                                    initMessageOperator
+                                    initMessageOperator,
                                 );
                                 this.logger.silly(
-                                    `initMessageOperator removed`
+                                    `initMessageOperator removed`,
                                 );
 
                                 this.options.callback(
                                     null,
-                                    this.universalSession
+                                    this.universalSession,
                                 );
                                 resolve(this.universalSession);
 
                                 this.logger.silly(
-                                    "callback (and Promise) resolved"
+                                    "callback (and Promise) resolved",
                                 );
                                 this.logger.info(`Ready to use`);
                             },
@@ -298,9 +299,9 @@ export class Client {
                                         : "No type received"
                                 }"`,
                                 400,
-                                "Bad request"
+                                "Bad request",
                             );
-                        }
+                        },
                     );
                 } catch (e) {
                     this.logger.silly(`Error occurred`);
@@ -317,7 +318,7 @@ export class Client {
                         this.options.callback(e, null);
                         resolve(e);
                         this.logger.silly(
-                            `Promise resolved. callback rejected`
+                            `Promise resolved. callback rejected`,
                         );
                     }
                 }

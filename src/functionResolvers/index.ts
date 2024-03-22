@@ -46,7 +46,7 @@ export abstract class FunctionResolver extends Resolver {
     public abstract setTheirs(id: string): Promise<FunctionResolverFunction>;
 
     public abstract getTheirs(
-        id: string
+        id: string,
     ): Promise<FunctionResolverFunction | null>;
 
     public abstract close(): void;

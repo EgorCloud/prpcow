@@ -20,9 +20,9 @@ export abstract class ModelResolver extends Resolver {
             this.logger = new Logger({
                 ...this.options.logger,
                 name: `${Object.getPrototypeOf(
-                    this
+                    this,
                 ).constructor.typeName()} ${this.options.session.sessionId.slice(
-                    -4
+                    -4,
                 )}`,
             });
         } else {
@@ -32,12 +32,12 @@ export abstract class ModelResolver extends Resolver {
 
     public abstract serialize(
         model: any,
-        getFunctionId: (executor: Function) => Promise<string>
+        getFunctionId: (executor: Function) => Promise<string>,
     ): Promise<object> | object;
 
     public abstract deserialize(
         model: any,
-        getFunctionWrapper: (id: string) => Promise<FunctionResolverFunction>
+        getFunctionWrapper: (id: string) => Promise<FunctionResolverFunction>,
     ): Promise<any> | any;
 }
 
