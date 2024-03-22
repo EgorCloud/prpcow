@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0-alpha.17](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.16...v2.0.0-alpha.17) (2024-03-22)
+
+
+### Features
+
+* Changed way of generating default Classes; Add InvertedWeakMap; Code refactor; Uncomment and refine function cleanup test; Update LICENSE year; Updated Base Node and npm version to 18.x ([38b2db1](https://github.com/yeskiy/prpcow/commit/38b2db1a1a62e46c8f399ec6b53d3c414ee925b2))
+
 ## [2.0.0-alpha.16](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.15...v2.0.0-alpha.16) (2023-09-12)
 
 
