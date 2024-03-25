@@ -14,6 +14,9 @@ export * from "./compressResolvers";
 export * from "./idResolvers";
 export * from "./sessionStoreResolver";
 
+// Errors
+export * from "./universalRPC/errors/SendError";
+
 export const compressResolvers = {
     NoCompressionResolver,
 };

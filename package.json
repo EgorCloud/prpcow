@@ -14,7 +14,7 @@
     "scripts": {
         "release": "npx standard-version -p alpha",
         "release:jdi": "npx standard-version && npm run release:doPush",
-        "release:doPush": "git push --follow-tags origin main && npm run release:publish",
+        "release:doPush": "git push --follow-tags origin master && npm run release:publish",
         "release:publish": "npm publish",
         "pretest": "npm run build",
         "test": "cd tests && npm run test",
