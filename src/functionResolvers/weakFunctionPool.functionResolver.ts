@@ -187,64 +187,60 @@ export default class WeakFunctionPool extends FunctionResolver {
 
     async setTheirs(id: string) {
         this.logger.silly("setTheirs", id);
-        this.theirsFunctions.set(
-            id,
-            (...params: any[]) =>
-                new Promise(async (resolve, reject) => {
-                    this.logger.debug(
-                        `Theirs function wrapper called (${id}) with params:`,
-                        params,
+        this.theirsFunctions.set(id, async (...params: any[]) => {
+            const { stack } = new Error();
+            return new Promise(async (resolve, reject) => {
+                this.logger.debug(
+                    `Theirs function wrapper called (${id}) with params:`,
+                    params,
+                );
+                const requestId = await this.options.uuid();
+                const requestLogger = Logger.child({
+                    name: requestId.slice(-4),
+                    parentLogger: this.logger,
+                });
+                this.theirsFunctionsWaitPool[requestId] = (response: any) => {
+                    requestLogger.silly(
+                        `Got Response by function response Handler`,
                     );
-                    const requestId = await this.options.uuid();
-                    const requestLogger = Logger.child({
-                        name: requestId.slice(-4),
-                        parentLogger: this.logger,
-                    });
-                    this.theirsFunctionsWaitPool[requestId] = (
-                        response: any,
-                    ) => {
-                        requestLogger.silly(
-                            `Got Response by function response Handler`,
-                        );
-                        if (
-                            typeof response === "object" &&
-                            (response.type === "unexpected" ||
-                                response.type ===
-                                    constants.errors.CONNECTION_LOST) &&
-                            response.__from === "theirs"
-                        ) {
-                            reject(response);
-                        } else {
-                            resolve(response);
-                        }
-                    };
-                    requestLogger.silly(`Theirs function wrapper added in que`);
-                    try {
-                        await this.options.sendMessage(
-                            this.messageBuilder("execute", requestId, {
-                                id,
-                                payload: await this.options.serializeObject(
-                                    params,
-                                    this.setOurs.bind(this),
-                                ),
-                            }),
-                        );
-                        requestLogger.silly(
-                            `Theirs function wrapper request sent`,
-                        );
-                    } catch (e) {
-                        requestLogger.silly(
-                            `Theirs function wrapper request failed`,
-                        );
-                        Reflect.deleteProperty(
-                            this.theirsFunctionsWaitPool,
-                            requestId,
-                        );
-                        requestLogger.silly(`Remove from wait pool`);
-                        reject(e);
+                    if (
+                        typeof response === "object" &&
+                        (response.type === "unexpected" ||
+                            response.type ===
+                                constants.errors.CONNECTION_LOST) &&
+                        response.__from === "theirs"
+                    ) {
+                        reject(response);
+                    } else {
+                        resolve(response);
                     }
-                }),
-        );
+                };
+                requestLogger.silly(`Theirs function wrapper added in que`);
+                try {
+                    await this.options.sendMessage(
+                        this.messageBuilder("execute", requestId, {
+                            id,
+                            payload: await this.options.serializeObject(
+                                params,
+                                this.setOurs.bind(this),
+                            ),
+                        }),
+                    );
+                    requestLogger.silly(`Theirs function wrapper request sent`);
+                } catch (e) {
+                    requestLogger.silly(
+                        `Theirs function wrapper request failed`,
+                    );
+                    Reflect.deleteProperty(
+                        this.theirsFunctionsWaitPool,
+                        requestId,
+                    );
+                    requestLogger.silly(`Remove from wait pool`);
+                    e.stack = stack;
+                    reject(e);
+                }
+            });
+        });
         this.theirsFunctionsIds.push(id);
         return this.theirsFunctions.get(
             id,

@@ -8,6 +8,7 @@ import typeAssert, { DataObject } from "../utils/typeAssert.util";
 import RuntimeError from "../utils/error.utils";
 import badRequestUtil from "../utils/badRequest.util";
 import { IdResolver, IIdResolver } from "../idResolvers";
+import { SendError } from "./errors/SendError";
 
 export default class UniversalRPC extends EventEmitter {
     private options: {
@@ -124,7 +125,7 @@ export default class UniversalRPC extends EventEmitter {
     private async send(data: any) {
         try {
             if (this.session.readyState !== this.session.OPEN) {
-                const error = new Error(
+                const error = new SendError(
                     "Session is not Opened. Cannot send data",
                 );
                 this.logger.error("Tried to send data when session is closed");
