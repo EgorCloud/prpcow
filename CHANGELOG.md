@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0-alpha.18](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.17...v2.0.0-alpha.18) (2024-03-25)
+
+
+### Features
+
+* Add SendError class and refactor function resolver ([5597e4b](https://github.com/yeskiy/prpcow/commit/5597e4b1ef99d23bd4a63f7bafc58bf9f7a1b86b))
+
 ## [2.0.0-alpha.17](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.16...v2.0.0-alpha.17) (2024-03-22)
 
 

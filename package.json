@@ -1,6 +1,6 @@
 {
     "name": "prpcow",
-    "version": "2.0.0-alpha.17",
+    "version": "2.0.0-alpha.18",
     "description": "Plain RPC (Remote Procedure Call) over WebSocket",
     "type": "module",
     "main": "./dist/esm/src/index.js",
