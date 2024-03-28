@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0-alpha.20](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.19...v2.0.0-alpha.20) (2024-03-28)
+
+
+### Bug Fixes
+
+* Fix issues (with init method to public in `client.ts`) ([ef8cbab](https://github.com/yeskiy/prpcow/commit/ef8cbabe964ca209d173742785231ba0e3cd6d38))
+
 ## [2.0.0-alpha.19](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.18...v2.0.0-alpha.19) (2024-03-28)
 
 
