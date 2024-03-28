@@ -61,6 +61,23 @@ export class Client {
 
     private universalSession: UniversalRPC;
 
+    static create(
+        WebsocketImplementation: WebsocketProto,
+        address: string | URL,
+        protocols: string | string[],
+        options: ClientOptions,
+        callback: Function = () => {},
+    ) {
+        const client = new Client(
+            WebsocketImplementation,
+            address,
+            protocols,
+            options,
+            callback,
+        );
+        return client.init();
+    }
+
     constructor(
         WebsocketImplementation: WebsocketProto,
         address: string | URL,
@@ -100,8 +117,6 @@ export class Client {
             ]),
         );
         this.logger.silly("Websocket created and modified");
-        // @ts-ignore
-        return this.init();
     }
 
     private init = () =>
