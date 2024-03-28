@@ -49,7 +49,7 @@ describe("Base tests", () => {
                         resolve(session);
                     }
                 },
-            );
+            ).init();
         });
         expect(client).toBeDefined();
         await server.close();
@@ -98,7 +98,7 @@ describe("Base tests", () => {
                         });
                     }
                 },
-            );
+            ).init();
         });
         expect(client).toBeDefined();
         const result = await client.theirsModel.some.ping();
@@ -159,7 +159,7 @@ describe("Base tests", () => {
                         });
                     }
                 },
-            );
+            ).init();
         });
         expect(client).toBeDefined();
 
@@ -236,7 +236,7 @@ describe("Base tests", () => {
                         });
                     }
                 },
-            );
+            ).init();
         });
         expect(client).toBeDefined();
         const passThrough = new stream.PassThrough();
@@ -303,7 +303,7 @@ describe("Base tests", () => {
                         });
                     }
                 },
-            );
+            ).init();
         });
         let isClientGotClosed = false;
         client.on("closeRequest", async () => {
@@ -381,7 +381,7 @@ describe("Base tests", () => {
                         });
                     }
                 },
-            );
+            ).init();
         });
         expect(client).toBeDefined();
         const newModelEvent = new Promise((resolve) => {
@@ -478,7 +478,7 @@ describe("Base tests", () => {
                         });
                     }
                 },
-            );
+            ).init();
         });
         let isGotError = false;
         expect(client).toBeDefined();
@@ -544,7 +544,7 @@ describe("Base tests", () => {
                         });
                     }
                 },
-            );
+            ).init();
         });
         expect(client).toBeDefined();
         const result = await client.theirsModel.some.ping();
@@ -611,7 +611,7 @@ describe("Base tests", () => {
                         });
                     }
                 },
-            );
+            ).init();
         });
         expect(client).toBeDefined();
         const result =

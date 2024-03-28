@@ -119,7 +119,7 @@ export class Client {
         this.logger.silly("Websocket created and modified");
     }
 
-    private init = () =>
+    public init = () =>
         new Promise((resolve, reject) => {
             const initMessageOperator = (event: WebSocket.MessageEvent) => {
                 this.logger.silly("Got message from server");
