@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0-alpha.19](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.18...v2.0.0-alpha.19) (2024-03-28)
+
+
+### Features
+
+* Add static create method in Client class ([1a6320d](https://github.com/yeskiy/prpcow/commit/1a6320d30a996ef57c2147f1aea437b99441ea6d))
+
 ## [2.0.0-alpha.18](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.17...v2.0.0-alpha.18) (2024-03-25)
 
 
