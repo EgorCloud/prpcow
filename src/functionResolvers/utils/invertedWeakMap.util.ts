@@ -1,15 +1,17 @@
+import { UniversalFinalizationRegistry } from "./UniversalFinalizationRegistry.util";
+
 export default class InvertedWeakMap<
     K extends string | symbol = string,
     V extends object = object,
 > extends Map<K, any> {
-    private registry: FinalizationRegistry<K>;
+    private registry: UniversalFinalizationRegistry<K>;
 
     constructor(
         onFinalizeCallback?: (key: K) => void | any | Promise<void | any>,
     ) {
         super();
 
-        this.registry = new FinalizationRegistry(async (key) => {
+        this.registry = new UniversalFinalizationRegistry(async (key) => {
             this.delete(key);
             try {
                 if (onFinalizeCallback) await onFinalizeCallback(key);

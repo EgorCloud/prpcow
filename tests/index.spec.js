@@ -406,7 +406,7 @@ describe("Base tests", () => {
         expect(client.theirsModel.otherPing).toBeTruthy();
 
         await new Promise((resolve) => {
-            setTimeout(resolve, 100);
+            setTimeout(resolve, 1000);
         });
 
         if (global.gc) {
@@ -416,11 +416,11 @@ describe("Base tests", () => {
         }
         client.functionResolver.findUnusedFunctions();
         await new Promise((resolve) => {
-            setTimeout(resolve, 100);
+            setTimeout(resolve, 1000);
         });
         client.functionResolver.findUnusedFunctions();
         await new Promise((resolve) => {
-            setTimeout(resolve, 100);
+            setTimeout(resolve, 1000);
         });
 
         expect(
