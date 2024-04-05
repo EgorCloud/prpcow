@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0-alpha.22](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.21...v2.0.0-alpha.22) (2024-04-05)
+
+
+### Bug Fixes
+
+* Add session validation to weak function pool ([6caafc2](https://github.com/yeskiy/prpcow/commit/6caafc24952725a800006ad696a74a7b9345154a))
+
 ## [2.0.0-alpha.21](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.20...v2.0.0-alpha.21) (2024-04-01)
 
 
