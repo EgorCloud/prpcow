@@ -14,6 +14,8 @@ const constants = {
 };
 
 export default class WeakFunctionPool extends FunctionResolver {
+    private isSessionActive: boolean = true;
+
     static typeName() {
         return "WeakFunctionPool";
     }
@@ -50,10 +52,12 @@ export default class WeakFunctionPool extends FunctionResolver {
         this.findUnusedTimeout = setTimeout(
             function findUnused() {
                 this.findUnusedFunctions();
-                this.findUnusedTimeout = setTimeout(
-                    findUnused.bind(this),
-                    this.timeoutSize,
-                );
+                if (this.isSessionActive) {
+                    this.findUnusedTimeout = setTimeout(
+                        findUnused.bind(this),
+                        this.timeoutSize,
+                    );
+                }
             }.bind(this),
             this.timeoutSize,
         );
@@ -61,7 +65,7 @@ export default class WeakFunctionPool extends FunctionResolver {
             timeoutSize: this.timeoutSize,
         });
         // If connection was closed, we need to reject all promises
-        this.options.session.addEventListener("close", ({ code, reason }) =>
+        this.options.session.addEventListener("close", ({ code, reason }) => {
             Object.values(this.theirsFunctionsWaitPool).forEach((item) => {
                 const err = new Error(
                     `Session Connection was closed with code "${code}" ${
@@ -73,8 +77,10 @@ export default class WeakFunctionPool extends FunctionResolver {
                 // @ts-ignore
                 err.__from = "theirs";
                 item(err);
-            }),
-        );
+            });
+            this.isSessionActive = false;
+            clearTimeout(this.findUnusedTimeout);
+        });
         this.logger.silly("Mounted event listener on close event");
 
         this.logger.silly("Ready to use");
@@ -257,11 +263,22 @@ export default class WeakFunctionPool extends FunctionResolver {
             .filter((item) => !item.presented)
             .map((item) => item.id);
         if (functionIds.length) {
-            this.options.sendMessage(
-                this.baseMessageBuilder("clear", { ids: functionIds }),
-            );
+            this.sendClearFunction(functionIds);
             this.logger.debug(`Found ${functionIds.length} functions`);
             this.logger.silly("Clear request sent");
+        }
+    }
+
+    private async sendClearFunction(functionIds: string[]) {
+        try {
+            await this.options.sendMessage(
+                this.baseMessageBuilder("clear", { ids: functionIds }),
+            );
+        } catch (e) {
+            this.logger.warn(
+                `Error on request clear functions with ids: ${functionIds}`,
+                e,
+            );
         }
     }
 
