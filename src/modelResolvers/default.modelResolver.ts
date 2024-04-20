@@ -7,6 +7,8 @@ import { LoggerOptions } from "../utils/logger.util";
 
 // eslint-disable-next-line @typescript-eslint/naming-convention,camelcase
 export class DefaultModelResolver__JSONLike {
+    __asJson: true = true;
+
     private readonly data: object;
 
     constructor(data: object) {
@@ -172,6 +174,10 @@ export default class DefaultModelResolver extends ModelResolver {
         } = {};
         if (Object.values(this.ignoredTypes).indexOf(model) === -1) {
             returnValue.type = model.constructor?.name || "Object";
+
+            if (typeof model === "object" && model.__asJson) {
+                returnValue.type = "DefaultModelResolver__JSONLike";
+            }
 
             if (this.unsupportedTypes.indexOf(returnValue.type) !== -1) {
                 throw new Error(`Unsupported type: ${returnValue.type}`);
