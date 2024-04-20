@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0-alpha.23](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.22...v2.0.0-alpha.23) (2024-04-20)
+
+
+### Bug Fixes
+
+* Fix JSONLike model recognition ([557d5a4](https://github.com/yeskiy/prpcow/commit/557d5a4d3b0837731151ab188cacae72f2e3147e))
+
 ## [2.0.0-alpha.22](https://github.com/yeskiy/prpcow/compare/v2.0.0-alpha.21...v2.0.0-alpha.22) (2024-04-05)
 
 
